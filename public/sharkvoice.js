@@ -2,7 +2,7 @@
    Streams one sentence at a time (Gemini Live PCM, Edge mp3, or the browser voice as fallbacks), never overlaps two voices,
    and reveals each sentence as it starts to be spoken so readers follow the voice instead of racing ahead of it. */
 function SharkVoice(o){
-  const RATE=o.rate||1.1,IDS=['vikram','zara','uncle'];
+  const RATE=o.rate||1.04,IDS=['vikram','zara','uncle'];
   let ac=null,ana=null,Q=[],playing=false,gen=0,cur=null,pcm=[],speaker=null,T={},muted=!!o.muted;
   const headers=()=>({'x-room':o.room,'x-token':o.token||''});
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -36,9 +36,9 @@ function SharkVoice(o){
     resume(){ac&&ac.resume()},
     setMuted(m){muted=m;if(m)stop()},
     turnStart(id,inv){T[id]={inv,idx:0,pend:0,text:'',shown:''}},
-    turnText(id,text,mood){const t=T[id];if(!t)return;if(mood)t.mood=mood;t.text=text;if(ready())flush(t,false);else o.onReveal&&o.onReveal(t.inv,text)},
+    turnText(id,text,mood){const t=T[id];if(!t)return;if(mood)t.mood=mood;t.text=text;if(!ready())o.onReveal&&o.onReveal(t.inv,text)}, // spoken whole at turnEnd, so the intonation carries across sentences
     turnEnd(id,inv,r){const t=T[id]||(T[id]={inv,idx:0,pend:0,shown:''});t.mood=t.mood||r.mood;t.text=r.speech;t.ended=1;
-      if(ready()){flush(t,true);if(!t.pend)o.onReveal&&o.onReveal(inv,r.speech)}else o.onReveal&&o.onReveal(inv,r.speech);
+      if(ready()){say(t,r.speech);if(!t.pend)o.onReveal&&o.onReveal(inv,r.speech)}else o.onReveal&&o.onReveal(inv,r.speech);
       check(t);setTimeout(()=>{if(!t.done){t.done=1;o.onSpoken&&o.onSpoken()}},30000)},
     reset(){stop();T={}}
   };

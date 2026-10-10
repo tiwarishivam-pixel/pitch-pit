@@ -208,7 +208,7 @@ body:not([data-role=watch]) .watchonly{display:none!important}
         </p>
         <div class="judge" id="modes" role="group" aria-label="How should they judge?">
           <button type="button" data-m="honest" aria-pressed="true"><b>Honest feedback</b><span>Sharper questions, one real insight per answer</span></button>
-          <button type="button" data-m="show" aria-pressed="false"><b>Show mode</b><span>Same rigour, more roasting and drama</span></button>
+          <button type="button" data-m="show" aria-pressed="false"><b>Roast mode</b><span>Savage and dark. They tear the idea apart for sport</span></button>
         </div>
       </div>
       <div class="pc-foot">
@@ -273,6 +273,7 @@ S.on('connect',()=>{if(offline){offline=false;toast('Back online')}
     if(a&&a.err){$('gone').hidden=false;$('gone-p').textContent=a.err;document.querySelector('header.top').hidden=$('main').hidden=true;return}
     host=a.role=='stage';document.body.dataset.role=host?'host':'watch';render()})});
 S.on('disconnect',()=>{offline=true;toast('Connection lost. Reconnecting…')});
+S.on('serverRestart',()=>toast('The server is restarting. This room will close, so start a new one in a minute.'));
 S.on('state',s=>{st=s;render()});
 fetch('/api/qr?room='+CODE).then(r=>r.json()).then(d=>{inviteUrl=d.url;$('qr').src=d.qr}).catch(()=>{$('qr').alt='QR code unavailable. Use the code or the invite link.'});
 $('rcode').textContent=$('scode').textContent=fmtCode(CODE);

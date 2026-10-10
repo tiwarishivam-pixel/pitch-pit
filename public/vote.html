@@ -66,6 +66,7 @@ function start(){
   S=io();$('bar2').hidden=false;$('cap').hidden=false;
   S.on('connect',()=>{$('net').hidden=true;S.emit('join',{role:'vote',room:CODE,deviceId:dev},r=>{if(r&&r.err)$a.innerHTML=`<h1 class="bad">Room not found</h1><p class="dim">${esc(r.err)}</p><a class="btn" href="/">Back to the lobby</a>`})});
   S.on('disconnect',()=>{$('net').hidden=false});
+S.on('serverRestart',()=>toast('The server is restarting. This room will close, so start a new one in a minute.'));
   S.on('state',s=>{st=s;render()});S.on('mine',m=>{mine=m;render()});
   S.on('turnStart',({id,inv})=>V.turnStart(id,inv));S.on('turnText',({id,text,mood})=>V.turnText(id,text,mood));S.on('turnEnd',({id,inv,r})=>V.turnEnd(id,inv,r));S.on('reset',()=>{V.reset();$('cap').classList.add('idle');$('captext').textContent='Waiting for the next question.';$('capwho').textContent=''})}
 const my=()=>mine&&mine.vr==st.vr?mine.vote:null;

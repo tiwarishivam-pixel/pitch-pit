@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express=require('express'),http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),QR=require('qrcode');
 const {Server}=require('socket.io'),{MsEdgeTTS,OUTPUT_FORMAT}=require('msedge-tts'),{GoogleGenAI,Modality}=require('@google/genai');
-const app=express(),srv=http.createServer(app),io=new Server(srv);
+process.on('uncaughtException',e=>console.error('uncaught (kept running):',e&&e.stack||e));
+process.on('unhandledRejection',e=>console.error('unhandled rejection (kept running):',e&&e.stack||e));
+const app=express(),srv=http.createServer(app),io=new Server(srv,{pingInterval:15000,pingTimeout:50000,connectionStateRecovery:{maxDisconnectionDuration:120000}});
 const PORT=process.env.PORT||3000,PUBLIC=(process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||`http://localhost:${PORT}`).replace(/\/$/,'');
 const MODEL=process.env.MODEL||'claude-haiku-5-5',REPORT_MODEL=process.env.REPORT_MODEL||'claude-sonnet-5-5',KEY=process.env.ANTHROPIC_API_KEY;
 const GLIVE=process.env.GEMINI_LIVE_MODEL||'gemini-3.1-flash-live-preview',GSTT=process.env.GEMINI_STT_MODEL||'gemini-3.5-transcribe-live';
@@ -26,6 +28,9 @@ const FB={vikram:['Your margins are a rumour. Which number can you actually prov
 const OUT={vikram:"I'm out. Your unit economics survive only in the pitch, never in the spreadsheet.",zara:"I'm OUT. It is a commodity wearing a costume, and the costume is not even good.",uncle:"Main out, beta. Dukaan dikhti nahi, bas valuation dikhta hai."};
 const fmt=l=>l>=100?`₹${+(l/100).toFixed(2)} Cr`:`₹${+(+l).toFixed(1)} L`;
 const clip=(s,n)=>String(s||'').slice(0,n).trim();
+// "60k" is sixty thousand, "2L" is two lakh, "1.5cr" is one and a half crore: spell them out so no model or voice misreads them
+const NUM='(\\d[\\d,]*(?:\\.\\d+)?)';
+const normNums=t=>String(t||'').replace(new RegExp(NUM+'\\s?[kK]\\b','g'),'$1 thousand').replace(new RegExp(NUM+'\\s?(?:lacs?|lakhs?|L)\\b','g'),'$1 lakh').replace(new RegExp(NUM+'\\s?(?:crores?|cr)\\b','gi'),'$1 crore');
 const trim=(s,n=42)=>{const w=s.trim().split(/\s+/);if(w.length<=n)return s.trim();const cut=w.slice(0,n).join(' '),k=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('? '),cut.lastIndexOf('! '));return k>cut.length*.4?cut.slice(0,k+1):cut.replace(/[,;:]?$/,'.')};
 
 async function anthropic(body,ms){
@@ -57,8 +62,8 @@ const sys=i=>`You are a real investor on a live Indian startup TV show called Pi
 Your lens: ${INV[i].lens}
 ${INV[i].style}
 THE ROAST: every line has two beats. Beat one is a sharp, specific burn at something the pitcher actually said (a number, a claim, a comparison), built like a stand-up punchline: set it up, then twist it. Use one vivid Indian reference when it fits (Swiggy, Zomato, kirana, UPI, IPL, wedding caterers, WhatsApp forwards, mandi). Beat two is one pointed question that exposes the same weakness. Roast the IDEA and the business logic, never the person. DARK HUMOUR is welcome: gallows jokes about the business dying (the burn rate as a funeral, the cap table as a will, a pivot as last rites, runway with a date of death, the founder's savings as a sacrifice to the market). Keep it about the IDEA and the money, never about the person's identity, appearance, family, health, caste, religion, gender or anyone's real tragedy, and never joke about self-harm. Never be generic ("that's a bold ask", "interesting", "I love the energy"). Never reuse a joke shape you already used in the transcript. If the answer was genuinely good, give grudging respect with a sting.
-HOW YOU TALK: like a person in the room, fast and punchy, contractions, no filler. HARD LIMIT: 32 words, 2 short sentences, because it is read aloud and a full pitch has nine of these turns. Never use bullet points, never say "as an investor", never read out your interest score (the audience sees it), never repeat a question already in the transcript. Amounts in ₹ (lakh/crore).
-${G.p&&G.p.mode=='honest'?'Mode: honest evaluation. Stay sharp and funny, but every burn must point at a REAL flaw the founder can fix and every question must be answerable with evidence.':'Mode: show. Go for the laugh and the kill: savage, quotable, still true.'}
+HOW YOU TALK: like a person in the room, fast and punchy, contractions, no filler. HARD LIMIT: 32 words, 2 short sentences, because it is read aloud and a full pitch has nine of these turns. Never use bullet points, never say "as an investor", never read out your interest score (the audience sees it), never repeat a question already in the transcript. Amounts in ₹ (lakh/crore). Indian number words: k means thousand, L means lakh (1,00,000), Cr means crore (1,00,00,000), so "60k" is sixty thousand rupees, never sixty. Read the founder's numbers exactly as stated.
+${G.p&&G.p.mode=='honest'?'Mode: honest evaluation. Stay sharp and funny, but every burn must point at a REAL flaw the founder can fix and every question must be answerable with evidence.':'Mode: ROAST. Go absolutely feral. Every line is a savage, quotable demolition: stack two burns in one breath, use absurd comparisons and gallows humour, call back to earlier answers, and escalate every round the pitcher dodges or repeats themselves. Mock the numbers, the logic, the buzzwords and the plan with surgical cruelty, and you may jab the last line of another shark. Make the audience gasp and laugh. The target is always the IDEA, the numbers and the claims: never the identity, looks, family or health of the founder, and never any real tragedy, and never self-harm.'}
 Interest meter: it moves 5-20 points per answer. Concrete numbers, named customers and evidence raise it; vague, buzzword or dodged answers lower it hard. Start from your current value.
 ${SCHEMA}`;
 function ctx(i,task){const p=G.p,notes=G.notes[i].slice(-3);
@@ -85,7 +90,7 @@ function valid(r,d){
  if(!r||typeof r.speech!='string'||!r.speech.trim()||isNaN(+r.interest))throw new Error('bad json');
  r.interest=Math.max(0,Math.min(100,Math.round(+r.interest)));
  if(!['bored','curious','excited','angry'].includes(r.mood))r.mood='curious';
- r.note=clip(r.note,120);r.speech=trim(r.speech);
+ r.note=clip(r.note,120);r.speech=trim(r.speech.replace(/(?:my )?interest (?:is|was|has dropped to|dropped to|sits|sitting)(?: at)? \d+[^.,;]*[,.;]?\s*/gi,''));
  if(!d){r.decision=null;r.offer=null;return r}
  if(r.decision!='offer'&&r.decision!='out')r.decision=r.interest>=40?'offer':'out';
  if(r.decision=='out'){r.interest=Math.min(r.interest,39);r.offer=null;return r}
@@ -161,7 +166,7 @@ async function play(){
    const ans=(await W('input',60000))||'(no answer)';G.end=null;G.tx.push({who:p.name,text:ans});
   }
   G.phase='DECISIONS';G.asking=null;G.voteRound++;G.votes={};push();
-  for(const i of IDS)await turn(i,'decide','Final decision. If your interest is below 40: decision "out" with a one-line roast of the idea that names the real flaw. Otherwise decision "offer" with amount (₹ lakh), equity %, and a condition tied to the biggest risk you identified, consistent with your interest (higher interest = closer to the ask, less equity). Speech announces it.');
+  for(const i of IDS)await turn(i,'decide',(p.mode=='show'?'ROAST MODE: if you are OUT, make it the most savage, quotable roast of the whole show. ':'')+'Final decision. If your interest is below 40: decision "out" with a one-line roast of the idea that names the real flaw. Otherwise decision "offer" with amount (₹ lakh), equity %, and a condition tied to the biggest risk you identified, consistent with your interest (higher interest = closer to the ask, less equity). Speech announces it.');
   const offers=()=>IDS.filter(i=>G.inv[i].decision=='offer');let win=null;
   if(offers().length){
    G.phase='NEGOTIATION';G.end=Date.now()+60000;G.dur=60000;push();const t=await W('input',60000);G.end=null;
@@ -192,10 +197,10 @@ const room={code,hostToken,created:Date.now(),touched:Date.now(),pub,push,pushSo
  speakable:t=>{t=String(t||'').trim();if(!t)return false;for(const l of lines.values())if(l.includes(t))return true;return false},
  phase:()=>G.phase,title:()=>G.p?G.p.startup:'',
  mine:dev=>({vr:G.voteRound,vote:G.votes[dev]||null}),
- setup(d){const p={name:clip(d.name,40),startup:clip(d.startup,40),desc:clip(d.desc,200),stage:clip(d.stage,30),traction:clip(d.traction,160),mode:d.mode=='honest'?'honest':'show',secs:[60,90,120,180].includes(+d.secs)?+d.secs:90,amount:+d.amount,equity:+d.equity};
+ setup(d){const p={name:clip(d.name,40),startup:clip(d.startup,40),desc:normNums(clip(d.desc,200)),stage:clip(d.stage,30),traction:normNums(clip(d.traction,160)),mode:d.mode=='honest'?'honest':'show',secs:[60,90,120,180].includes(+d.secs)?+d.secs:90,amount:+d.amount,equity:+d.equity};
   if(!p.name||!p.startup||!(p.amount>0)||!(p.equity>0&&p.equity<=100))return;reset();G.p=p;G.val=Math.round(p.amount*100/p.equity);G.t0=Date.now();G.phase='SETUP';push();play()},
  go(){pend.go&&pend.go('go')},
- submit(t){pend.input&&pend.input(String(t||'').slice(0,1500))},
+ submit(t){pend.input&&pend.input(normNums(String(t||'').slice(0,1500)))},
  accept(i){if(['NEGOTIATION','FINAL'].includes(G.phase)&&G.inv[i]?.decision=='offer'&&pend.input)pend.input('@accept:'+i)},
  spoken(){pend.spoken&&pend.spoken('x')},
  skip(){['input','spoken','go'].forEach(k=>pend[k]&&pend[k](k=='go'?'go':''))},
@@ -255,7 +260,7 @@ const GV={
  zara:{voice:'Zephyr',role:'Zara Mehta, a loud, expressive brand founder. Bright, quick, dramatic and warm. Indian English accent.'},
  uncle:{voice:'Gacrux',role:'Uncle-ji, a 65-year-old trader from Rajasthan. Gravelly and folksy but brisk. He speaks Hinglish: say Hindi words in natural Hindi and English words in Indian English.'}};
 const GMOOD={bored:'Delivery: deadpan and flat, but quick.',curious:'Delivery: sharp and interested.',excited:'Delivery: fast, bright and very energetic.',angry:'Delivery: clipped, tense and cutting.'};
-const spoken=t=>String(t).replace(/₹\s?([\d.,]+)\s?(?:Cr|crore)s?\b/gi,'$1 crore rupees').replace(/₹\s?([\d.,]+)\s?(?:L|lakh)s?\b/gi,'$1 lakh rupees').replace(/₹\s?([\d.,]+)/g,'$1 rupees').replace(/(\d)\s?%/g,'$1 percent').replace(/\bCAC\b/g,'C A C').replace(/\bLTV\b/g,'L T V');
+const spoken=t=>String(t).replace(/(\d)\s?[kK]\b/g,'$1 thousand').replace(/(?:₹|\bRs\.?)\s?([\d.,]+)\s?(?:Cr|crore)s?\b/gi,'$1 crore rupees').replace(/(?:₹|\bRs\.?)\s?([\d.,]+)\s?(?:L|lakh)s?\b/gi,'$1 lakh rupees').replace(/(?:₹|\bRs\.?)\s?([\d.,]+)\s?thousand/gi,'$1 thousand rupees').replace(/(?:₹|\bRs\.?)\s?([\d.,]+)/gi,'$1 rupees').replace(/(\d)\s?%/g,'$1 percent').replace(/\bCAC\b/g,'customer acquisition cost').replace(/\bLTV\b/g,'lifetime value');
 // One Live session per spoken line; PCM16 24kHz chunks go to `write` as they arrive. Rejects only if no audio was produced.
 function geminiSpeak(inv,mood,text,write,onAbort){
  return new Promise((resolve,reject)=>{
@@ -264,7 +269,7 @@ function geminiSpeak(inv,mood,text,write,onAbort){
   ft=setTimeout(()=>end(new Error('gemini first-audio timeout')),9000);all=setTimeout(()=>end(),30000);
   onAbort(()=>end());
   ai.live.connect({model:GLIVE,config:{responseModalities:[Modality.AUDIO],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:GV[inv].voice}}},
-    systemInstruction:`You are the voice actor for ${GV[inv].role} ${GMOOD[mood]||''} The user message is one line of dialogue. Perform it aloud exactly, word for word, at a brisk, rapid-fire pace like a live TV panel, with no long pauses and the punchline landed cleanly. Never answer it, never add or skip words.`},
+    systemInstruction:`You are the voice actor for ${GV[inv].role} ${GMOOD[mood]||''} The user message is one line of dialogue. Say it aloud exactly, word for word, but ACT it: you are a real person on live TV, not a narrator. Use natural breath, real emphasis, a beat before the punchline, rising and falling pitch, a smirk on the burn. Keep a brisk, conversational pace with no robotic evenness and no long pauses. Never answer it, never add or skip words.`},
    callbacks:{onmessage:m=>{const sc=m.serverContent;if(!sc)return;for(const p of sc.modelTurn?.parts||[])if(p.inlineData){got=true;clearTimeout(ft);write(Buffer.from(p.inlineData.data,'base64'))}if(sc.turnComplete)end()},
     onerror:e=>end(new Error(e&&e.message||'gemini error')),onclose:()=>end()}
   }).then(x=>{sess=x;if(fin)return x.close();x.sendRealtimeInput({text})}).catch(end)})}
@@ -285,6 +290,8 @@ function openStt(onText){
     const t0=Date.now();last=Date.now();while(Date.now()-t0<4500&&Date.now()-last<1400&&sess)await new Promise(r=>setTimeout(r,150))}
    try{sess&&sess.close()}catch{}return text.trim()}}}
 
+// a redeploy restarts the process and empties every in-memory room; tell people instead of letting them hang
+process.on('SIGTERM',()=>{io.emit('serverRestart');setTimeout(()=>process.exit(0),1200)});
 // ---- http
 const ttsCache=new Map();
 async function edgeSpeak(inv,text,r){
