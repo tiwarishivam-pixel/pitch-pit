@@ -170,6 +170,7 @@ select.il option{font:500 18px var(--body);color:#1b1230;background:#fff3dc}
 #gone{grid-row:1/3;display:grid;place-content:center;text-align:center;gap:14px}
 [hidden]{display:none!important}
 body[data-role=watch] .hostonly{display:none!important}
+body:not([data-role=watch]) .watchonly{display:none!important}
 
 @media (max-width:980px){
   body{height:auto;overflow:auto;padding:10px 14px 24px}
@@ -185,6 +186,7 @@ body[data-role=watch] .hostonly{display:none!important}
   <button class="chip" id="copyinvite" type="button" aria-label="Copy the invite link for this room"><span class="dim">Room</span><b id="rcode"></b><span class="cp">Copy link</span></button>
   <div class="prog" id="steps" role="img" aria-label="Progress"></div>
   <div id="clock" role="timer"><span class="n" id="cn"></span><span class="l" id="cl"></span><div class="bar" aria-hidden="true"><i id="cb"></i></div></div>
+  <button class="btn ghost small watchonly" id="sndbtn" type="button">Tap to hear the sharks</button>
   <button class="btn ghost small" id="panelbtn" type="button" aria-expanded="false" aria-controls="rail">Room panel</button>
 </header>
 
@@ -256,6 +258,7 @@ body[data-role=watch] .hostonly{display:none!important}
 <script src="/socket.io/socket.io.js"></script>
 <script src="/voice-orb.js"></script>
 <script src="/pitch.js"></script>
+<script src="/sharkvoice.js"></script>
 <script>
 const params=new URLSearchParams(location.search),CODE=(params.get('room')||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,6);
 const S=io();
@@ -306,56 +309,35 @@ $('pf').addEventListener('submit',e=>{e.preventDefault();
   audio();navigator.mediaDevices&&navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop())).catch(()=>{});
   S.emit('setup',{name:$('f-name').value,startup:$('f-su').value,desc:$('f-ds').value,stage:$('f-stage').value,traction:$('f-tr').value,mode:setupMode,secs:+$('f-secs').value,amount:a,equity:q})});
 
-/* ---------- sound effects ---------- */
-let ac=null,ana=null;
-function audio(){ac=ac||new AudioContext();if(!ana){ana=ac.createAnalyser();ana.fftSize=512;ana.connect(ac.destination)}ac.resume();return ac}
-function beep(f,d,t='sine',v=.1,w=0){try{audio();const o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+w;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch{}}
-const SFX={out:()=>{beep(300,.15,'square',.08);beep(150,.4,'sawtooth',.1,.15)},offer:()=>{beep(660,.1);beep(880,.25,'sine',.12,.1)},deal:()=>[523,659,784,1047,1319].forEach((f,i)=>beep(f,.3,'triangle',.16,i*.12))};
-
-/* ---------- investor voices: Gemini Live streamed from the server; Edge voices, then the browser voice, as fallbacks ---------- */
-let Q=[],playing=false,gen=0,cur=null,speaker=null,pcmSrcs=[],orbP=null,mic=null,micBase='',micFinal=null,micDone=null,micT0=0,micTick=0;
+/* ---------- sound and investor voices (shared player: the host and every guest hear the sharks) ---------- */
+let orbP=null,mic=null,micBase='',micFinal=null,micDone=null,micT0=0,micTick=0;
 const ORB={};IDS.forEach(i=>{ORB[i]=VoiceOrb.create($('o-'+i));ORB[i].start()});
-const speaking=(i,on)=>{const c=$('c-'+i);c&&c.classList.toggle('talk',on);speaker=on?i:(speaker===i?null:speaker);ORB[i].setState(on?'speaking':live[i]?'thinking':'idle')};
-const fetchAudio=(inv,text,mood)=>fetch(`/api/tts?inv=${inv}&mood=${mood||''}&text=${encodeURIComponent(text)}`,{headers:{'x-room':CODE,'x-token':localStorage.getItem('pp_host_'+CODE)||''}}).then(r=>r.ok?r:Promise.reject(r.status));
-function playUrl(url){return new Promise((res,rej)=>{audio();const a=cur=new Audio(url);try{ac.createMediaElementSource(a).connect(ana)}catch{}const t=setTimeout(res,30000);a.onended=()=>{clearTimeout(t);res()};a.onerror=()=>{clearTimeout(t);rej()};a.play().catch(e=>{clearTimeout(t);rej(e)})})}
-async function playPcm(r,my){audio();const reader=r.body.getReader();let carry=new Uint8Array(0),next=0;
-  for(;;){const {value,done}=await reader.read();if(my!==gen){reader.cancel();return}
-    if(value){const b=new Uint8Array(carry.length+value.length);b.set(carry);b.set(value,carry.length);const n=b.length&~1;carry=b.slice(n);
-      if(n){const i16=new Int16Array(b.buffer,0,n/2),f=new Float32Array(n/2);for(let k=0;k<f.length;k++)f[k]=i16[k]/32768;
-        const buf=ac.createBuffer(1,f.length,24000);buf.copyToChannel(f,0);const src=ac.createBufferSource();src.buffer=buf;src.connect(ana);
-        const at=Math.max(ac.currentTime+.06,next);src.start(at);next=at+buf.duration;pcmSrcs.push(src);src.onended=()=>{pcmSrcs=pcmSrcs.filter(x=>x!==src)}}}
-    if(done)break}
-  await sleep(Math.max(0,(next-ac.currentTime)*1000)+60)}
-async function playResponse(r,my){if((r.headers.get('content-type')||'').startsWith('audio/mpeg'))return playUrl(URL.createObjectURL(await r.blob()));return playPcm(r,my)}
-function browserSay(inv,text){return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text),v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang));u.voice=v[IDS.indexOf(inv)%(v.length||1)]||null;u.lang='en-IN';u.pitch={vikram:.7,zara:1.5,uncle:.5}[inv];u.rate={vikram:.95,zara:1.2,uncle:.85}[inv];u.onend=u.onerror=res;speechSynthesis.speak(u)}catch{res()}})}
-// the caption reveals each sentence as it starts to be spoken, so the audience reads along with the voice instead of ahead of it
-async function pump(){if(playing)return;playing=true;
-  while(Q.length){const it=Q.shift();if(it.g!==gen)continue;const t=it.t;speaking(t.inv,true);t.shown=(t.shown?t.shown+' ':'')+it.s;bub(t.inv,t.shown);
-    try{await playResponse(await it.p,it.g)}catch{if(it.g===gen)await browserSay(t.inv,it.s)}
-    speaking(t.inv,false);t.pend--;check(t)}
-  playing=false}
-function check(t){if(t.ended&&t.pend<=0&&!t.done){t.done=1;S.emit('spoken')}}
-function say(t,s){s=s.trim();if(!s)return;t.pend++;const p=fetchAudio(t.inv,s,t.mood);p.catch(()=>{});Q.push({t,s,p,g:gen});pump()}
-function flush(t,end){const rest=t.text.slice(t.idx),re=/.+?[.!?।]+(?=\s)/gs;let m,last=0;while((m=re.exec(rest))){say(t,m[0]);last=re.lastIndex}t.idx+=last;if(end&&t.text.slice(t.idx).trim()){say(t,t.text.slice(t.idx));t.idx=t.text.length}}
+const speaking=(i,on)=>{const c=$('c-'+i);c&&c.classList.toggle('talk',on);ORB[i].setState(on?'speaking':live[i]?'thinking':'idle')};
+const V=SharkVoice({room:CODE,token:localStorage.getItem('pp_host_'+CODE)||'',
+  onReveal:(i,x)=>bub(i,x),onSpeaking:speaking,onIdle:i=>{if(!live[i])ORB[i].setState('idle')},onSpoken:()=>{if(host)S.emit('spoken')}});
+const audio=()=>V.audio();
+function beep(f,d,t='sine',v=.1,w=0){try{const ac=V.audio(),o=ac.createOscillator(),g=ac.createGain(),s=ac.currentTime+w;o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(ac.destination);o.start(s);o.stop(s+d)}catch{}}
+const SFX={out:()=>{beep(300,.15,'square',.08);beep(150,.4,'sawtooth',.1,.15)},offer:()=>{beep(660,.1);beep(880,.25,'sine',.12,.1)},deal:()=>[523,659,784,1047,1319].forEach((f,i)=>beep(f,.3,'triangle',.16,i*.12))};
+// guests on this page get the same voices; the button is their volume knob
+$('sndbtn').onclick=()=>{if(V.muted)V.setMuted(false);else if(!V.ready())V.audio();else V.setMuted(true)};
+setInterval(()=>{const b=$('sndbtn');if(b)b.textContent=V.muted?'Sound off':V.ready()?'Sound on':'Tap to hear the sharks'},500);
 function levels(an){const f=new Uint8Array(an.frequencyBinCount),t=new Uint8Array(an.fftSize);an.getByteFrequencyData(f);an.getByteTimeDomainData(t);
   let sum=0;for(const v of t){const x=(v-128)/128;sum+=x*x}
   const e=[0,.04,.1,.2,.4,1].map(k=>Math.floor(k*f.length)),bands=[0,1,2,3,4].map(i=>{let a=0;for(let k=e[i];k<e[i+1];k++)a+=f[k];return a/Math.max(1,e[i+1]-e[i])/255});
   return[bands,Math.min(1,Math.sqrt(sum/t.length)*5)]}
 (function frame(){
-  IDS.forEach(i=>{if(i===speaker&&ana){const [b,l]=levels(ana);ORB[i].setLevels(b,l)}else ORB[i].setLevels([0,0,0,0,0],0)});
+  IDS.forEach(i=>{if(i===V.speaker&&V.ana){const [b,l]=levels(V.ana);ORB[i].setLevels(b,l)}else ORB[i].setLevels([0,0,0,0,0],0)});
   if(orbP){if(mic&&mic.an){const [b,l]=levels(mic.an);orbP.setLevels(b,l)}else orbP.setLevels([0,0,0,0,0],0)}
   requestAnimationFrame(frame)})();
 function setNow(i,text,empty){nowWho=i;const m=st.inv[i]||{};$('nowwho').textContent=NM[i];$('nowwho').dataset.i=i;$('nowmood').textContent=MOOD[m.mood]||'';$('nowtext').textContent=text;$('nowtext').classList.toggle('empty',!!empty)}
 function bub(i,x,empty){const b=$('c-'+i).querySelector('.bub');b.textContent=x;b.classList.toggle('empty',!!empty);if(host&&nowWho===i)setNow(i,x,empty)}
-S.on('turnStart',({id,inv})=>{live[inv]=1;T[id]={inv,idx:0,pend:0,text:'',shown:''};if(host)nowWho=inv;bub(inv,'…',true);ORB[inv].setState('thinking')});
-S.on('turnText',({id,text,mood})=>{const t=T[id];if(!t)return;if(mood)t.mood=mood;t.text=text;if(host)flush(t,false);else bub(t.inv,text)});
-S.on('turnEnd',({id,inv,r})=>{live[inv]=0;const t=T[id]||(T[id]={inv,idx:0,pend:0,shown:''});t.mood=t.mood||r.mood;t.text=r.speech;t.ended=1;
-  if(!host){bub(inv,r.speech);ORB[inv].setState('idle');return}
-  flush(t,true);if(!t.pend)bub(inv,r.speech);
-  if(r.decision=='out')SFX.out();else if(r.decision=='offer')SFX.offer();check(t);if(!t.pend)ORB[inv].setState('idle');setTimeout(()=>{if(!t.done){t.done=1;S.emit('spoken')}},30000)});
-S.on('reset',()=>{gen++;Q=[];cur&&cur.pause();pcmSrcs.forEach(x=>{try{x.stop()}catch{}});pcmSrcs=[];try{speechSynthesis.cancel()}catch{};
-  T={};live={};cnt={};nowWho=null;$('cnt').innerHTML='';IDS.forEach(i=>{speaking(i,false);ORB[i].setState('idle');bub(i,'Waiting for the pitch',true)});$('nowtext').textContent='The panel is listening.';$('nowtext').classList.add('empty');$('nowwho').textContent=$('nowmood').textContent='';ctlKey='';resKey='';prevInt={};txN=-1;$('tx').innerHTML='';confOn=false;offerKey={}});
-S.on('dealSfx',()=>{if(host)SFX.deal()});S.on('noDealSfx',()=>{if(host)beep(120,.9,'sawtooth',.14)});
+S.on('turnStart',({id,inv})=>{live[inv]=1;if(host)nowWho=inv;V.turnStart(id,inv);bub(inv,'…',true);ORB[inv].setState('thinking')});
+S.on('turnText',({id,text,mood})=>V.turnText(id,text,mood));
+S.on('turnEnd',({id,inv,r})=>{live[inv]=0;V.turnEnd(id,inv,r);
+  if(host||V.ready()){if(r.decision=='out')SFX.out();else if(r.decision=='offer')SFX.offer()}
+  if(!V.speaker)ORB[inv].setState('idle')});
+S.on('reset',()=>{V.reset();T={};live={};cnt={};nowWho=null;$('cnt').innerHTML='';IDS.forEach(i=>{speaking(i,false);ORB[i].setState('idle');bub(i,'Waiting for the pitch',true)});$('nowtext').textContent='The panel is listening.';$('nowtext').classList.add('empty');$('nowwho').textContent=$('nowmood').textContent='';ctlKey='';resKey='';prevInt={};txN=-1;$('tx').innerHTML='';confOn=false;offerKey={}});
+S.on('dealSfx',()=>{if(host||V.ready())SFX.deal()});S.on('noDealSfx',()=>{if(host||V.ready())beep(120,.9,'sawtooth',.14)});
 S.on('react',e=>{rt.push(Date.now());cnt[e]=(cnt[e]||0)+1;$('cnt').innerHTML=['🔥','💀','💸','😂'].map(x=>`<span>${x} ${cnt[x]||0}</span>`).join('');
   if(reduced)return;const f=$('float');while(f.children.length>=40)f.firstChild.remove();const s=document.createElement('span');s.className='em';s.textContent=e;s.style.left=Math.random()*90+'%';s.onanimationend=()=>s.remove();f.appendChild(s)});
 
@@ -406,7 +388,7 @@ addEventListener('keydown',e=>{if(!host)return;
   if(e.code=='Space'&&$('micbtn')){e.preventDefault();audio();toggleMic()}
   else if(['1','2','3'].includes(e.key)&&canAccept())pickOffer(IDS[+e.key-1])});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&(mic||rec))stopMic()});
-addEventListener('click',()=>ac&&ac.resume());
+addEventListener('click',()=>V.resume());
 
 /* ---------- rendering ---------- */
 const STEPS=['Reactions','Pitch','Round 1','Round 2','Round 3','Decisions','Report'];

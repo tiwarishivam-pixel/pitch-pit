@@ -11,16 +11,19 @@ const LBF=path.join(DATA,'leaderboard.json');let LB=[];try{LB=JSON.parse(fs.read
 
 // ---- investors
 const INV={
- vikram:{short:'Vikram',lens:'unit economics: pricing, gross margin, CAC, LTV, payback period, burn. If the pitcher gave no number, make them name one. Understated and dry; short clipped sentences; never exclaims.',
-  persona:'Vikram "The Calculator" Rao: cold, precise ex-private-equity analyst. Rarely impressed, and shows it by going quiet and exact rather than loud.'},
- zara:{short:'Zara',lens:'the customer and the brand: who is desperate for this, why would they tell a friend, what is the story, how does it spread. Dramatic, warm, fast; uses vivid images and a few ALL-CAPS words; gets bored visibly when answers are generic.',
-  persona:'Zara "Hype Queen" Mehta: loud, emotional D2C brand founder who loves storytelling. Excited fast, bored faster.'},
- uncle:{short:'Uncle-ji',lens:'trust and cash: who pays today, how do you collect, what happens in a tier-2 town, why would an incumbent not crush you, when is the profit. Speaks Hinglish (Hindi in Roman script mixed with English), uses folksy comparisons (mandi, dukaan, shaadi), distrusts apps, and haggles for more equity.',
-  persona:'Uncle-ji: old-school Marwari trader who built a wholesale business over 40 years. Warm but sceptical; keeps asking "profit kab aayega?".'}};
+ vikram:{short:'Vikram',lens:'unit economics: pricing, gross margin, CAC, LTV, payback, burn, what happens when a bigger player copies you. If the pitcher gave no number, make them name one. Dry, surgical, deadpan.',
+  persona:'Vikram "The Calculator" Rao: ex-private-equity analyst who has killed a thousand spreadsheets. Never raises his voice; the arithmetic does the damage. His roasts are deadpan one-liners that turn the pitcher\'s own numbers against them.',
+  style:'Style examples (never reuse them): "Six hundred rupees to win a customer who leaves in eleven months. That is not growth, that is a very expensive goodbye. What is payback after Swiggy copies you?" / "Twenty-eight percent margin before the driver, the packaging and the refunds. So, roughly zero. Show me the P&L of one kitchen."'},
+ zara:{short:'Zara',lens:'the customer and the brand: who is desperate for this, why would they tell a friend, what is the story, how does it spread, why is it not just a commodity with a logo. Dramatic, fast, savage about anything generic.',
+  persona:'Zara "Hype Queen" Mehta: loud D2C brand founder who built a following on Instagram. Adores a real story and is brutally bored by a fake one. Her roasts are theatrical, vivid and quotable, with a few ALL-CAPS words.',
+  style:'Style examples (never reuse them): "A tiffin with a logo is still a tiffin, darling. Where is the reason anyone posts it?" / "You said community four times and named zero humans. WHO is DM-ing you at midnight begging for this?"'},
+ uncle:{short:'Uncle-ji',lens:'trust and cash: who pays today, how do you collect, what happens in a tier-2 town, why would an incumbent not crush you, when is the profit, and why should anyone trust a founder with no shop. Hinglish, folksy, haggling for more equity.',
+  persona:'Uncle-ji: Marwari wholesaler who built a business over forty years and has seen every startup fad die. Affectionate but ruthless. His roasts are Hinglish proverbs and mandi comparisons that land like a slap on the back.',
+  style:'Style examples (never reuse them): "Beta, 25 crore ka valuation aur ek bhi kitchen apni nahi? Pehle dukaan, phir dhamaka. Profit kab aayega?" / "App-vapp bahut hua. Gallay mein paisa kitna aata hai roz, wahi bolo."'}};
 const IDS=Object.keys(INV);
-const VOICE={vikram:{v:'en-GB-RyanNeural',rate:'-4%',pitch:'-2Hz'},zara:{v:'en-IN-NeerjaNeural',rate:'+12%',pitch:'+4Hz'},uncle:{v:'en-IN-PrabhatNeural',rate:'-10%',pitch:'-6Hz'}};
-const FB={vikram:['What is your CAC against LTV? Numbers, not adjectives.','Margins look thin. Convince me otherwise.'],zara:['I LOVE the energy, but where is the brand story?!','Okay this is getting boring, wow me!'],uncle:['Beta, app-vapp theek hai, but profit kab aayega?','Thoda equity aur do, tabhi sochenge.']};
-const OUT={vikram:"I'm out. The unit economics don't survive a spreadsheet.",zara:"I'm OUT! Zero sparkle, zero story.",uncle:"Main out, beta. Profit dikhta nahi, bas app dikhta hai."};
+const VOICE={vikram:{v:'en-GB-RyanNeural',rate:'+8%',pitch:'-2Hz'},zara:{v:'en-IN-NeerjaNeural',rate:'+20%',pitch:'+4Hz'},uncle:{v:'en-IN-PrabhatNeural',rate:'+4%',pitch:'-6Hz'}};
+const FB={vikram:['Your margins are a rumour. Which number can you actually prove today?','That is a hobby with a pitch deck. What does one customer cost you?'],zara:['A logo is not a brand, darling. WHO would tell a friend about this?','This is giving a lunchbox with a LinkedIn profile. Where is the story?'],uncle:['Beta, app-vapp theek hai, par gallay mein paisa kahan hai? Profit kab aayega?','Itna bada valuation aur dukaan ek nahi? Thoda equity aur do, tabhi sochenge.']};
+const OUT={vikram:"I'm out. Your unit economics survive only in the pitch, never in the spreadsheet.",zara:"I'm OUT. It is a commodity wearing a costume, and the costume is not even good.",uncle:"Main out, beta. Dukaan dikhti nahi, bas valuation dikhta hai."};
 const fmt=l=>l>=100?`₹${+(l/100).toFixed(2)} Cr`:`₹${+(+l).toFixed(1)} L`;
 const clip=(s,n)=>String(s||'').slice(0,n).trim();
 const trim=(s,n=42)=>{const w=s.trim().split(/\s+/);if(w.length<=n)return s.trim();const cut=w.slice(0,n).join(' '),k=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('? '),cut.lastIndexOf('! '));return k>cut.length*.4?cut.slice(0,k+1):cut.replace(/[,;:]?$/,'.')};
@@ -35,7 +38,7 @@ async function anthropic(body,ms){
 // ---- rooms: every room is an independent game with its own state, audience, votes and report
 const rooms=new Map(),MAX_ROOMS=+process.env.MAX_ROOMS||40,REPORTS=path.join(DATA,'reports'),RN=c=>'r:'+c;
 function makeRoom(code,hostToken){
-let RUN=0,TID=0,G,pend={},pt=0,llmFails=0;const taps={};
+let RUN=0,TID=0,G,pend={},pt=0,llmFails=0;const taps={},lines=new Map();
 const emit=(ev,d)=>io.to(RN(code)).emit(ev,d);
 const fresh=()=>({run:++RUN,phase:'WAITING',round:0,p:null,val:null,asking:null,end:null,dur:0,tx:[],votes:{},voteRound:G?G.voteRound+1:0,result:null,roasts:[],notes:{vikram:[],zara:[],uncle:[]},outs:0,firstOut:null,t0:0,fallbacks:0,inv:Object.fromEntries(IDS.map(i=>[i,{interest:50,mood:'curious',decision:null,offer:null,last:''}]))});
 G=fresh();
@@ -52,9 +55,11 @@ const SCHEMA=`Reply with ONLY strict JSON, keys in this order ("mood" first, the
 {"mood":"bored|curious|excited|angry","speech":"<MAX 30 words, 2 sentences>","interest":0-100,"note":"<private 10-word note on the pitcher's weakest claim so far>","decision":null|"out"|"offer","offer":null|{"amount":<number in rupees LAKH; 100 lakh = 1 crore>,"equity":<percent>,"condition":"<max 12 words, specific to this business>"}}`;
 const sys=i=>`You are a real investor on a live Indian startup TV show called Pitch Pit. ${INV[i].persona}
 Your lens: ${INV[i].lens}
-How you talk: like a person in the room, not an assistant. Contractions, spoken rhythm. HARD LIMIT: 30 words, 2 short sentences, because it is read aloud and a full pitch has nine of these turns. Quote or paraphrase something specific the pitcher actually said (a number, a customer, a claim). Never use bullet points, never say "as an investor", never read out your interest score or meter number (the audience sees it), never repeat a question already in the transcript. Amounts in ₹ (lakh/crore). Attack the IDEA and the business model, never the person.
-${G.p&&G.p.mode=='honest'?'Mode: honest evaluation. The pitcher wants real feedback. Every question targets the single biggest unproven assumption and every comment carries one concrete insight. Keep humour light.':'Mode: show. Be entertaining and sharp, but your criticism must still be specific and true.'}
-Interest meter: it moves 5-20 points per answer. Concrete numbers, named customers and evidence raise it; vague, buzzword or dodged answers lower it. Start from your current value.
+${INV[i].style}
+THE ROAST: every line has two beats. Beat one is a sharp, specific burn at something the pitcher actually said (a number, a claim, a comparison), built like a stand-up punchline: set it up, then twist it. Use one vivid Indian reference when it fits (Swiggy, Zomato, kirana, UPI, IPL, wedding caterers, WhatsApp forwards, mandi). Beat two is one pointed question that exposes the same weakness. Roast the IDEA and the business logic, never the person. DARK HUMOUR is welcome: gallows jokes about the business dying (the burn rate as a funeral, the cap table as a will, a pivot as last rites, runway with a date of death, the founder's savings as a sacrifice to the market). Keep it about the IDEA and the money, never about the person's identity, appearance, family, health, caste, religion, gender or anyone's real tragedy, and never joke about self-harm. Never be generic ("that's a bold ask", "interesting", "I love the energy"). Never reuse a joke shape you already used in the transcript. If the answer was genuinely good, give grudging respect with a sting.
+HOW YOU TALK: like a person in the room, fast and punchy, contractions, no filler. HARD LIMIT: 32 words, 2 short sentences, because it is read aloud and a full pitch has nine of these turns. Never use bullet points, never say "as an investor", never read out your interest score (the audience sees it), never repeat a question already in the transcript. Amounts in ₹ (lakh/crore).
+${G.p&&G.p.mode=='honest'?'Mode: honest evaluation. Stay sharp and funny, but every burn must point at a REAL flaw the founder can fix and every question must be answerable with evidence.':'Mode: show. Go for the laugh and the kill: savage, quotable, still true.'}
+Interest meter: it moves 5-20 points per answer. Concrete numbers, named customers and evidence raise it; vague, buzzword or dodged answers lower it hard. Start from your current value.
 ${SCHEMA}`;
 function ctx(i,task){const p=G.p,notes=G.notes[i].slice(-3);
  return `Pitcher: ${p.name}. Startup: "${p.startup}".${p.desc?` What it does: ${p.desc}.`:''}${p.stage?` Stage: ${p.stage}.`:''}${p.traction?` Claimed traction: ${p.traction}.`:''}
@@ -72,7 +77,7 @@ async function call(i,task,id){
   for await(const ch of res.body){buf+=dec.decode(ch,{stream:true});let n;
    while((n=buf.indexOf('\n'))>=0){const l=buf.slice(0,n).trim();buf=buf.slice(n+1);if(!l.startsWith('data:'))continue;
     try{const d=JSON.parse(l.slice(5));if(d.type=='content_block_delta'&&d.delta.text){txt+=d.delta.text;const m=txt.match(/"speech"\s*:\s*"((?:[^"\\]|\\.)*)/);
-     if(m){let s=null;try{s=JSON.parse('"'+m[1].replace(/\\$/,'')+'"')}catch{}if(s&&s!==last){last=s;const mm=txt.match(/"mood"\s*:\s*"(\w+)"/);emit('turnText',{id,text:s,mood:mm&&mm[1]})}}}}catch{}}}
+     if(m){let s=null;try{s=JSON.parse('"'+m[1].replace(/\\$/,'')+'"')}catch{}if(s&&s!==last){last=s;lines.set(id,s);const mm=txt.match(/"mood"\s*:\s*"(\w+)"/);emit('turnText',{id,text:s,mood:mm&&mm[1]})}}}}catch{}}}
   return JSON.parse(txt.replace(/^[^{]*|[^}]*$/g,''));
  }finally{done()}
 }
@@ -98,7 +103,7 @@ async function turn(i,kind,task){
  chk(run);if(!r){G.fallbacks++;r=fb(i,kind)}
  const s=G.inv[i];s.interest=r.interest;s.mood=r.mood;s.last=r.speech;if(r.decision){s.decision=r.decision;s.offer=r.offer}
  if(r.note)G.notes[i].push(r.note);
- G.tx.push({who:INV[i].short,text:r.speech});
+ G.tx.push({who:INV[i].short,text:r.speech});lines.set(id,r.speech);if(lines.size>16)lines.delete(lines.keys().next().value);
  if(r.decision=='out'){G.outs++;G.roasts.push(r.speech);if(G.firstOut==null)G.firstOut=Date.now()-G.t0}
  push();emit('turnEnd',{id,inv:i,r:{speech:r.speech,interest:r.interest,mood:r.mood,decision:r.decision,offer:r.offer,fallback:!!r.fallback}});
  await waitFor('spoken',30000);chk(run);return r}
@@ -184,6 +189,7 @@ async function play(){
 
 
 const room={code,hostToken,created:Date.now(),touched:Date.now(),pub,push,pushSoon,reset,
+ speakable:t=>{t=String(t||'').trim();if(!t)return false;for(const l of lines.values())if(l.includes(t))return true;return false},
  phase:()=>G.phase,title:()=>G.p?G.p.startup:'',
  mine:dev=>({vr:G.voteRound,vote:G.votes[dev]||null}),
  setup(d){const p={name:clip(d.name,40),startup:clip(d.startup,40),desc:clip(d.desc,200),stage:clip(d.stage,30),traction:clip(d.traction,160),mode:d.mode=='honest'?'honest':'show',secs:[60,90,120,180].includes(+d.secs)?+d.secs:90,amount:+d.amount,equity:+d.equity};
@@ -245,10 +251,10 @@ setInterval(sweep,60e3).unref();
 
 // ---- voice: Gemini Live (investor voices + pitcher transcription), Edge neural voices as fallback
 const GV={
- vikram:{voice:'Charon',role:'Vikram Rao, a cold, precise private-equity analyst. Calm, low, exact and dry. Indian English accent.'},
+ vikram:{voice:'Charon',role:'Vikram Rao, a cold, precise private-equity analyst. Low, exact and dry, with a faint smirk. Indian English accent.'},
  zara:{voice:'Zephyr',role:'Zara Mehta, a loud, expressive brand founder. Bright, quick, dramatic and warm. Indian English accent.'},
- uncle:{voice:'Gacrux',role:'Uncle-ji, a 65-year-old trader from Rajasthan. Slow, gravelly and folksy. He speaks Hinglish: say Hindi words in natural Hindi and English words in Indian English.'}};
-const GMOOD={bored:'Delivery: flat, weary and slow.',curious:'Delivery: interested and measured.',excited:'Delivery: fast, bright and very energetic.',angry:'Delivery: clipped, tense and sharp.'};
+ uncle:{voice:'Gacrux',role:'Uncle-ji, a 65-year-old trader from Rajasthan. Gravelly and folksy but brisk. He speaks Hinglish: say Hindi words in natural Hindi and English words in Indian English.'}};
+const GMOOD={bored:'Delivery: deadpan and flat, but quick.',curious:'Delivery: sharp and interested.',excited:'Delivery: fast, bright and very energetic.',angry:'Delivery: clipped, tense and cutting.'};
 const spoken=t=>String(t).replace(/₹\s?([\d.,]+)\s?(?:Cr|crore)s?\b/gi,'$1 crore rupees').replace(/₹\s?([\d.,]+)\s?(?:L|lakh)s?\b/gi,'$1 lakh rupees').replace(/₹\s?([\d.,]+)/g,'$1 rupees').replace(/(\d)\s?%/g,'$1 percent').replace(/\bCAC\b/g,'C A C').replace(/\bLTV\b/g,'L T V');
 // One Live session per spoken line; PCM16 24kHz chunks go to `write` as they arrive. Rejects only if no audio was produced.
 function geminiSpeak(inv,mood,text,write,onAbort){
@@ -258,7 +264,7 @@ function geminiSpeak(inv,mood,text,write,onAbort){
   ft=setTimeout(()=>end(new Error('gemini first-audio timeout')),9000);all=setTimeout(()=>end(),30000);
   onAbort(()=>end());
   ai.live.connect({model:GLIVE,config:{responseModalities:[Modality.AUDIO],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:GV[inv].voice}}},
-    systemInstruction:`You are the voice actor for ${GV[inv].role} ${GMOOD[mood]||''} The user message is one line of dialogue. Perform it aloud exactly, word for word. Never answer it, never add or skip words.`},
+    systemInstruction:`You are the voice actor for ${GV[inv].role} ${GMOOD[mood]||''} The user message is one line of dialogue. Perform it aloud exactly, word for word, at a brisk, rapid-fire pace like a live TV panel, with no long pauses and the punchline landed cleanly. Never answer it, never add or skip words.`},
    callbacks:{onmessage:m=>{const sc=m.serverContent;if(!sc)return;for(const p of sc.modelTurn?.parts||[])if(p.inlineData){got=true;clearTimeout(ft);write(Buffer.from(p.inlineData.data,'base64'))}if(sc.turnComplete)end()},
     onerror:e=>end(new Error(e&&e.message||'gemini error')),onclose:()=>end()}
   }).then(x=>{sess=x;if(fin)return x.close();x.sendRealtimeInput({text})}).catch(end)})}
@@ -290,17 +296,29 @@ async function edgeSpeak(inv,text,r){
  if(!buf.length)throw new Error('empty audio');
  if(ttsCache.size>300)ttsCache.delete(ttsCache.keys().next().value);ttsCache.set(k,buf);
  r.type('audio/mpeg').send(buf)}
+const shared=new Map(); // inv|mood|text -> in-flight or finished PCM, so ten listeners cost one Gemini call
+function shareSpeak(inv,mood,text){
+ const key=inv+'|'+mood+'|'+text;let e=shared.get(key);
+ if(!e){e={chunks:[],done:false,fail:null,subs:new Set()};shared.set(key,e);
+  if(shared.size>200)shared.delete(shared.keys().next().value);setTimeout(()=>shared.delete(key),150e3).unref();
+  geminiSpeak(inv,mood,text,b=>{e.chunks.push(b);e.subs.forEach(f=>f(b))},()=>{})
+   .catch(err=>{e.fail=err}).finally(()=>{e.done=true;e.subs.forEach(f=>f(null))})}
+ return e}
 app.get('/api/tts',async(q,r)=>{
- // only the host of a live room may synthesise speech; the endpoint is not a free text-to-speech API
- const hr=rooms.get(normCode(q.get('x-room')));if(!hr||!q.get('x-token')||q.get('x-token')!==hr.hostToken)return r.sendStatus(403);
- const inv=VOICE[q.query.inv]?q.query.inv:'vikram',text=spoken(clip(q.query.text,500)),mood=String(q.query.mood||'');
+ // the endpoint is not a free text-to-speech API: the room's host may speak anything, guests only lines the sharks actually said
+ const hr=rooms.get(normCode(q.get('x-room')));if(!hr)return r.sendStatus(403);
+ const raw=clip(q.query.text,500);
+ if(!(q.get('x-token')&&q.get('x-token')===hr.hostToken)&&!hr.speakable(raw))return r.sendStatus(403);
+ const inv=VOICE[q.query.inv]?q.query.inv:'vikram',text=spoken(raw),mood=String(q.query.mood||'');
  if(!text)return r.sendStatus(400);
  if(GEMINI){
-  let started=false,abort=()=>{};
-  r.on('close',()=>abort());
-  const write=b=>{if(!started){started=true;r.set({'Content-Type':'audio/L16;rate=24000','Cache-Control':'no-store'});r.flushHeaders()}r.write(b)};
-  try{await geminiSpeak(inv,mood,text,write,f=>{abort=f});return r.end()}
-  catch(e){console.error('gemini voice fail, using fallback:',e.message);if(started)return r.end()}}
+  const e=shareSpeak(inv,mood,text);let started=false;
+  await new Promise(res=>{
+   const send=b=>{if(b===null)return res();if(!started){started=true;r.set({'Content-Type':'audio/L16;rate=24000','Cache-Control':'no-store'});r.flushHeaders()}r.write(b)};
+   e.chunks.forEach(send);if(e.done)return res();
+   e.subs.add(send);r.on('close',()=>{e.subs.delete(send);res()})});
+  if(started)return r.end();
+  if(e.fail)console.error('gemini voice fail, using fallback:',e.fail.message)}
  try{await edgeSpeak(inv,text,r)}catch(e){console.error('tts fail',e.message);r.sendStatus(502)}});
 app.set('trust proxy',1);
 app.use(express.json());
