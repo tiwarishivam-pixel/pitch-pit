@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pitch Pit: pitch your idea to three AI investors</title>
+<meta name="description" content="Create a room, pitch out loud to three AI investors, and get an honest evaluation of your idea.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23150c2b%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%279%27 fill=%27%23ffc24a%27/%3E%3C/svg%3E"><link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/pitch.css">
+<style>
+body{min-height:100vh}
+.wrap{max-width:1380px;margin:0 auto;padding:22px 32px 56px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}
+.brand{font:800 30px/1 var(--display);letter-spacing:-.02em;display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand i{width:14px;height:14px;border-radius:50%;background:var(--gold)}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:center;min-height:calc(100vh - 150px)}
+h1{font-size:clamp(46px,6.2vw,96px);line-height:.98;letter-spacing:-.035em;margin-bottom:22px}
+.lede{font-size:clamp(19px,1.5vw,23px);color:var(--dim);max-width:46ch;margin-bottom:30px}
+.actions{display:grid;gap:22px;max-width:520px}
+.join{display:grid;gap:10px}
+.join label{font-weight:700}
+.join .row{display:flex;gap:10px}
+.join input{flex:1;min-width:0;border-radius:12px;border:1.5px solid var(--field);background:rgba(10,4,25,.4);padding:12px 16px;font:800 26px var(--display);letter-spacing:.14em;text-transform:uppercase}
+.join input::placeholder{color:#a99bc7;letter-spacing:.08em;font-weight:600;text-transform:none;font-size:19px}
+.join input:focus{border-color:var(--gold)}
+.msg{min-height:26px;font-weight:700}
+.msg.bad{color:#ff9aa5}
+.choice{display:flex;flex-wrap:wrap;gap:10px}
+.set{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end}
+.seat{position:relative;display:grid;justify-items:center;text-align:center;padding-top:34px;isolation:isolate}
+.seat::before{content:"";position:absolute;inset:-60px 0 30% 0;z-index:-1;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 46%,transparent),transparent 88%);clip-path:polygon(40% 0,60% 0,100% 100%,0 100%);opacity:.6}
+.seat .port{height:clamp(130px,19vw,270px)}
+.seat:nth-child(2){padding-top:0}
+.seat h2{font-size:24px;color:var(--c);margin-top:4px}.seat p{color:var(--dim);font-size:17px}
+.floor{height:10px;border-radius:99px;margin:6px 6px 0;background:linear-gradient(90deg,transparent,rgba(255,194,74,.55),transparent)}
+.stage-wrap{display:grid;gap:8px}
+.lower{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;margin-top:40px}
+.lower h2{font-size:28px;margin-bottom:14px}
+.steps{display:grid;gap:14px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;font-size:20px}
+.steps li::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--field);font:800 20px var(--display)}
+.hof ol{margin:0;padding-left:24px;display:grid;gap:8px;font-size:19px}
+.hof li b{font-weight:800}.hof li span{color:var(--dim)}
+.small{color:var(--dim);font-size:16px;margin-top:18px}
+@media (max-width:980px){.hero,.lower{grid-template-columns:1fr}.hero{min-height:0}.set{order:-1}.wrap{padding:18px 18px 40px}}
+</style></head>
+<body>
+<div class="wrap">
+  <header><a class="brand" href="/"><i aria-hidden="true"></i>Pitch Pit</a><a class="btn ghost small" href="#how">How it works</a></header>
+  <main>
+  <div class="hero">
+    <div>
+      <h1>Pitch your idea to three AI investors.</h1>
+      <p class="lede">Open a room, talk through your startup out loud, and get questioned, offered, or turned down. Then read an honest report on what to prove next.</p>
+      <div class="actions">
+        <div><button class="btn big gold" id="create" type="button">Start a pitch room</button><p class="msg" id="cmsg" role="status"></p></div>
+        <form class="join" id="jf" autocomplete="off">
+          <label for="code">Joining someone else's room?</label>
+          <div class="row"><input id="code" maxlength="7" placeholder="Enter room code" inputmode="text" autocapitalize="characters" aria-describedby="jmsg"><button class="btn ghost" type="submit">Join</button></div>
+          <p class="msg" id="jmsg" role="status"></p>
+          <div class="choice" id="choice" hidden>
+            <a class="btn" id="asphone" href="#">Join as audience</a><a class="btn ghost" id="aswatch" href="#">Watch the big screen</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="stage-wrap" aria-hidden="true"><div class="set" id="set"></div><div class="floor"></div></div>
+  </div>
+
+  <div class="lower">
+    <section id="how"><h2>How a pitch works</h2>
+      <ol class="steps"><li>Open a room and share the link or code with anyone you want in the audience.</li><li>Fill in your pitch card, then pitch out loud for a minute or two.</li><li>Answer one question from each investor, three times round.</li><li>Take an offer or walk away, then read your report and send it to whoever needs it.</li></ol>
+      <p class="small">Every room is separate: your pitch and your report belong only to you. Rooms close when everyone has left.</p></section>
+    <section class="hof" id="hof" aria-label="Hall of fame"><h2>Hall of fame</h2><p class="dim">Loading…</p></section>
+  </div>
+  </main>
+</div>
+<script src="/pitch.js"></script>
+<script>
+$('set').innerHTML=IDS.map((i,k)=>`<figure class="seat" data-i="${i}" style="margin:0"><div class="port">${portrait(i,['curious','excited','bored'][k])}</div><h2>${NM[i]}</h2><p>${TAG[i]}</p></figure>`).join('');
+// create a room: the creator's host token stays in this browser, everyone else joins as audience
+$('create').onclick=async()=>{const b=$('create');b.disabled=true;$('cmsg').className='msg';$('cmsg').textContent='Opening your room…';
+  try{const r=await fetch('/api/rooms',{method:'POST'}),d=await r.json();
+    if(!r.ok)throw new Error(d.err||'Could not open a room');
+    localStorage.setItem('pp_host_'+d.code,d.token);location.href='/stage?room='+d.code}
+  catch(e){b.disabled=false;$('cmsg').className='msg bad';$('cmsg').textContent=e.message+'. Try again in a moment.'}};
+const norm=s=>s.toUpperCase().replace(/[^A-Z]/g,'').slice(0,6);
+$('code').addEventListener('input',e=>{const v=norm(e.target.value);e.target.value=fmtCode(v);$('choice').hidden=true;$('jmsg').textContent=''});
+$('jf').onsubmit=async e=>{e.preventDefault();const c=norm($('code').value);$('jmsg').className='msg';
+  if(c.length<6){$('jmsg').className='msg bad';$('jmsg').textContent='Room codes have 6 letters, like KQZ-MPD.';return}
+  $('jmsg').textContent='Checking…';
+  const d=await fetch('/api/rooms/'+c).then(r=>r.json()).catch(()=>({ok:0}));
+  if(!d.ok){$('jmsg').className='msg bad';$('jmsg').textContent='No room with that code. Check it with the person who opened it.';$('choice').hidden=true;return}
+  $('jmsg').textContent=d.title?`Found a room pitching ${d.title}.`:'Found the room.';
+  $('asphone').href='/vote?room='+c;$('aswatch').href='/stage?room='+c;$('choice').hidden=false;$('asphone').focus()};
+fetch('/api/leaderboard').then(r=>r.json()).then(l=>{
+  const top=[...l].sort((a,b)=>b.score-a.score).slice(0,5);
+  $('hof').innerHTML='<h2>Hall of fame</h2>'+(top.length?`<ol>${top.map(x=>`<li><b>${esc(x.startup)}</b> <span>by ${esc(x.name)} · ${x.score}/100${x.val?' · deal at '+fmt(x.val):''}</span></li>`).join('')}</ol>`:'<p class="dim">No pitches yet. The first one on the board sets the bar.</p>')}).catch(()=>{$('hof').innerHTML='<h2>Hall of fame</h2><p class="dim">Could not load the board right now.</p>'});
+</script>
+</body></html>

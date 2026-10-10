@@ -1,0 +1,5 @@
+.env
+leaderboard.json
+node_modules/
+*.png
+pp.log

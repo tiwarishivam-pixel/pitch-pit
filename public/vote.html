@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pitch Pit</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23150c2b%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%279%27 fill=%27%23ffc24a%27/%3E%3C/svg%3E"><link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/pitch.css">
+<style>
+body{display:flex;flex-direction:column;min-height:100svh;padding:max(14px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));font-size:19px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 14px}
+.brand{font:800 26px/1 var(--display);letter-spacing:-.02em;display:flex;align-items:center;gap:9px;text-decoration:none}
+.brand i{width:12px;height:12px;border-radius:50%;background:var(--gold)}
+#now{color:var(--dim);font-size:16px;text-align:right;max-width:58%}
+#net{background:var(--out);color:#2b0309;font-weight:800;text-align:center;padding:8px 12px;border-radius:10px;margin-bottom:12px}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;padding-bottom:18px}
+h1{font-size:clamp(30px,8vw,40px);line-height:1.05}
+.react{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.react button{display:grid;place-items:center;gap:2px;padding:16px 8px 12px;border:1.5px solid var(--line);border-radius:22px;background:var(--panel);touch-action:manipulation;cursor:pointer}
+.react button .e{font-size:58px;line-height:1.1}.react button .t{font-weight:700;font-size:17px;color:var(--dim)}
+.react button:active{transform:scale(.94);background:var(--raise)}
+.react.row4{grid-template-columns:repeat(4,1fr);gap:8px}.react.row4 button{padding:10px 4px 8px;border-radius:16px}.react.row4 .e{font-size:34px}.react.row4 .t{font-size:14px}
+.sent{color:var(--dim);font-size:17px;min-height:24px}
+.ctx{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.ctx li{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:14px;background:var(--panel);font-size:18px}
+.ctx b{color:var(--c);font-weight:800}
+.vote{display:grid;gap:12px}
+.vote button{min-height:84px;border:0;border-radius:22px;font:800 30px var(--display);touch-action:manipulation;cursor:pointer;color:#10231a;position:relative}
+.vote .inv{background:var(--deal)}.vote .pass{background:var(--out);color:#2a0509}
+.vote button[aria-pressed=true]{box-shadow:0 0 0 4px var(--bg),0 0 0 7px var(--ink)}
+.vote button:active{transform:scale(.97)}
+.vote small{display:block;font:700 16px var(--body)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px 18px;display:grid;gap:6px}
+.stamp{font:800 56px/1 var(--display);border:7px solid;border-radius:14px;padding:4px 18px;width:fit-content;transform:rotate(-5deg)}
+.stamp.deal{color:var(--deal)}.stamp.no{color:var(--out)}
+.pct{font:800 54px/1 var(--display);color:var(--gold)}
+.bad{color:#ff9aa5}
+.field input{font:800 28px var(--display);letter-spacing:.14em;text-transform:uppercase;text-align:center}
+</style></head>
+<body>
+<header><a class="brand" href="/"><i aria-hidden="true"></i>Pitch Pit</a><div id="now"></div></header>
+<div id="net" role="alert" hidden>Connection lost. Reconnecting…</div>
+<main id="a" aria-live="polite">Connecting…</main>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/pitch.js"></script>
+<script>
+const CODE=(new URLSearchParams(location.search).get('room')||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,6);
+const dev=localStorage.dev||(localStorage.dev=Math.random().toString(36).slice(2)+Date.now().toString(36));
+const REACT=[['🔥','Love it'],['💀','Dead'],['💸','Take my money'],['😂','Funny']];
+let st={phase:'WAITING',votes:{invest:0,pass:0},inv:{}},mine=null,key='',taps=[],sent=0,S=null;
+const $a=$('a');
+if(!CODE){$a.innerHTML=`<h1>Join a pitch room</h1><p class="dim">Enter the code shown on the big screen.</p><form id="jf" class="field" autocomplete="off"><label for="c">Room code</label><input id="c" maxlength="7" placeholder="KQZ-MPD" autocapitalize="characters"><button class="btn big" type="submit" style="margin-top:12px">Join</button><p class="bad" id="e" role="alert"></p></form>`;
+  $('c').oninput=e=>{e.target.value=fmtCode(e.target.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,6))};
+  $('jf').onsubmit=async e=>{e.preventDefault();const c=$('c').value.replace(/[^A-Z]/g,'');const d=await fetch('/api/rooms/'+c).then(r=>r.json()).catch(()=>({ok:0}));if(d.ok)location.href='/vote?room='+c;else $('e').textContent='No room with that code. Check it and try again.'}}
+else start();
+function start(){
+  S=io();
+  S.on('connect',()=>{$('net').hidden=true;S.emit('join',{role:'vote',room:CODE,deviceId:dev},r=>{if(r&&r.err)$a.innerHTML=`<h1 class="bad">Room not found</h1><p class="dim">${esc(r.err)}</p><a class="btn" href="/">Back to the lobby</a>`})});
+  S.on('disconnect',()=>{$('net').hidden=false});
+  S.on('state',s=>{st=s;render()});S.on('mine',m=>{mine=m;render()})}
+const my=()=>mine&&mine.vr==st.vr?mine.vote:null;
+function tap(e){const n=Date.now();taps=taps.filter(t=>n-t<1000);if(taps.length>=3)return;taps.push(n);sent++;navigator.vibrate&&navigator.vibrate(15);S.emit('react',e);const el=$('sent');if(el)el.textContent=`You have sent ${sent} reaction${sent==1?'':'s'}`}
+function cast(v){S.emit('vote',v);mine={vr:st.vr,vote:v};key='';render()}
+const reactions=(cls='')=>`<div class="react ${cls}">${REACT.map(([e,t])=>`<button type="button" data-e="${e}" aria-label="${t}"><span class="e" aria-hidden="true">${e}</span><span class="t">${t}</span></button>`).join('')}</div>`;
+function offersCtx(){return `<ul class="ctx" aria-label="What the panel decided">${IDS.map(i=>{const v=st.inv[i]||{};return `<li data-i="${i}"><b>${NM[i].split(' ')[0]}</b><span>${v.decision=='offer'&&v.offer?`${fmt(v.offer.amount)} for ${v.offer.equity}%`:v.decision=='out'?'is out':'is deciding…'}</span></li>`}).join('')}</ul>`}
+function render(){
+  const ph=st.phase,p=st.p;
+  $('now').textContent=p?`${p.startup} · ${p.name}`:`Room ${fmtCode(CODE)}`;
+  const grp=['SETUP','READY','PITCH','GRILLING','ANSWER'].includes(ph)?'R':['DECISIONS','NEGOTIATION','FINAL'].includes(ph)?'V':ph=='RESULT'?'X':'W';
+  const k=grp+my()+(grp=='V'?st.vr+JSON.stringify(st.inv):'')+(grp=='X'?JSON.stringify([st.votes,st.result&&st.result.deal,st.result&&st.result.reportId,st.result&&st.result.pending]):'')+(grp=='R'?ph:'');if(k==key)return;key=k;let h='';
+  if(grp=='W')h=`<h1>${p?`${esc(p.name)} is up next`:'Waiting for the pitch'}</h1><p class="dim">When the founder walks on, this screen turns into your reaction pad. Keep it open.</p>`;
+  if(grp=='R')h=`<h1>How is it landing?</h1>${reactions()}<p class="sent" id="sent">Up to three taps a second count. They fly across the big screen.</p>`;
+  if(grp=='V'){const v=my();h=`<h1>${v?`You voted ${v=='invest'?'invest':'pass'}`:'Would you put your own money in?'}</h1>${offersCtx()}
+    <div class="vote"><button class="inv" type="button" data-v="invest" aria-pressed="${v=='invest'}">Invest${v=='invest'?'<small>Tap Pass to change your mind</small>':''}</button><button class="pass" type="button" data-v="pass" aria-pressed="${v=='pass'}">Pass${v=='pass'?'<small>Tap Invest to change your mind</small>':''}</button></div>
+    <p class="dim">You can change your vote until the result appears.</p>${reactions('row4')}`}
+  if(grp=='X'){const r=st.result||{},d=r.deal,v=st.votes,t=v.invest+v.pass,m=my(),ag=t?Math.round(100*(d?v.invest:v.pass)/t):0,url=r.reportId?`/report?id=${r.reportId}`:'';
+    h=`<div class="stamp ${d?'deal':'no'}">${d?'DEAL':'NO DEAL'}</div>
+    <div class="card"><p>${d?`${esc(NM[d.inv]||d.inv)} offered ${fmt(d.amount)} for ${d.equity}%`:'The investors walked away.'}</p>${r.score!=null&&!r.pending?`<p class="dim">Pitch score <b style="color:var(--ink)">${r.score}/100</b></p>`:'<p class="dim">The analyst is still writing the report…</p>'}</div>
+    <div class="card"><p class="dim">${m?`You voted ${m=='invest'?'invest':'pass'}.`:'You did not vote.'}</p>${t?`<div class="pct">${ag}%</div><p>of the room agreed with the panel${m?(((m=='invest')==!!d)?', and so did you.':'. You saw it differently.'):'.'}</p>`:'<p>Nobody voted this round.</p>'}</div>
+    ${url?`<a class="btn big" href="${url}">Read the full report</a>`:''}<a class="btn ghost" href="/">Pitch your own idea</a>`}
+  $a.innerHTML=h;
+  $a.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>tap(b.dataset.e));
+  $a.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>cast(b.dataset.v))}
+</script>
+</body></html>
