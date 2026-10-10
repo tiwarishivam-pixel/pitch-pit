@@ -2,11 +2,12 @@ require('dotenv').config();
 const express=require('express'),http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),QR=require('qrcode');
 const {Server}=require('socket.io'),{MsEdgeTTS,OUTPUT_FORMAT}=require('msedge-tts'),{GoogleGenAI,Modality}=require('@google/genai');
 const app=express(),srv=http.createServer(app),io=new Server(srv);
-const PORT=process.env.PORT||3000,PUBLIC=(process.env.PUBLIC_URL||`http://localhost:${PORT}`).replace(/\/$/,'');
+const PORT=process.env.PORT||3000,PUBLIC=(process.env.PUBLIC_URL||process.env.RENDER_EXTERNAL_URL||`http://localhost:${PORT}`).replace(/\/$/,'');
 const MODEL=process.env.MODEL||'claude-haiku-5-5',REPORT_MODEL=process.env.REPORT_MODEL||'claude-sonnet-5-5',KEY=process.env.ANTHROPIC_API_KEY;
 const GLIVE=process.env.GEMINI_LIVE_MODEL||'gemini-3.1-flash-live-preview',GSTT=process.env.GEMINI_STT_MODEL||'gemini-3.5-transcribe-live';
 const ai=process.env.GEMINI_API_KEY?new GoogleGenAI({apiKey:process.env.GEMINI_API_KEY}):null,GEMINI=!!ai&&process.env.VOICE_ENGINE!='edge';
-const LBF=path.join(__dirname,'leaderboard.json');let LB=[];try{LB=JSON.parse(fs.readFileSync(LBF))}catch{}
+const DATA=process.env.DATA_DIR||__dirname;try{fs.mkdirSync(DATA,{recursive:true})}catch{}
+const LBF=path.join(DATA,'leaderboard.json');let LB=[];try{LB=JSON.parse(fs.readFileSync(LBF))}catch{}
 
 // ---- investors
 const INV={
@@ -32,7 +33,7 @@ async function anthropic(body,ms){
   if(!res.ok)throw new Error('http '+res.status+' '+(await res.text()).slice(0,200));
   return{res,done:()=>clearTimeout(t)}}catch(e){clearTimeout(t);throw e}}
 // ---- rooms: every room is an independent game with its own state, audience, votes and report
-const rooms=new Map(),MAX_ROOMS=+process.env.MAX_ROOMS||40,REPORTS=path.join(__dirname,'reports'),RN=c=>'r:'+c;
+const rooms=new Map(),MAX_ROOMS=+process.env.MAX_ROOMS||40,REPORTS=path.join(DATA,'reports'),RN=c=>'r:'+c;
 function makeRoom(code,hostToken){
 let RUN=0,TID=0,G,pend={},pt=0,llmFails=0;const taps={};
 const emit=(ev,d)=>io.to(RN(code)).emit(ev,d);
@@ -290,6 +291,8 @@ async function edgeSpeak(inv,text,r){
  if(ttsCache.size>300)ttsCache.delete(ttsCache.keys().next().value);ttsCache.set(k,buf);
  r.type('audio/mpeg').send(buf)}
 app.get('/api/tts',async(q,r)=>{
+ // only the host of a live room may synthesise speech; the endpoint is not a free text-to-speech API
+ const hr=rooms.get(normCode(q.get('x-room')));if(!hr||!q.get('x-token')||q.get('x-token')!==hr.hostToken)return r.sendStatus(403);
  const inv=VOICE[q.query.inv]?q.query.inv:'vikram',text=spoken(clip(q.query.text,500)),mood=String(q.query.mood||'');
  if(!text)return r.sendStatus(400);
  if(GEMINI){
@@ -299,14 +302,19 @@ app.get('/api/tts',async(q,r)=>{
   try{await geminiSpeak(inv,mood,text,write,f=>{abort=f});return r.end()}
   catch(e){console.error('gemini voice fail, using fallback:',e.message);if(started)return r.end()}}
  try{await edgeSpeak(inv,text,r)}catch(e){console.error('tts fail',e.message);r.sendStatus(502)}});
+app.set('trust proxy',1);
 app.use(express.json());
+const made=new Map(); // ip -> room creation times, so one visitor cannot drain the model credits
+const tooMany=ip=>{const now=Date.now(),a=(made.get(ip)||[]).filter(t=>now-t<3600e3);made.set(ip,a);if(a.length>=(+process.env.ROOMS_PER_IP_HOUR||8))return true;a.push(now);return false};
 app.post('/api/rooms',(q,r)=>{
+ if(tooMany(q.ip))return r.status(429).json({err:'You have opened a lot of rooms in the last hour'});
  if(rooms.size>=MAX_ROOMS)sweep(true);
  if(rooms.size>=MAX_ROOMS)return r.status(503).json({err:'All rooms are busy right now. Try again in a few minutes.'});
  const code=newCode(),token=crypto.randomBytes(12).toString('hex');rooms.set(code,makeRoom(code,token));
  r.json({code,token})});
 app.get('/api/rooms/:code',(q,r)=>{const x=rooms.get(normCode(q.params.code));r.json(x?{ok:1,code:x.code,phase:x.phase(),title:x.title()}:{ok:0})});
 app.get('/api/qr',async(q,r)=>{const code=normCode(q.query.room),want=String(q.query.url||''),url=want.startsWith(PUBLIC+'/')?want:`${PUBLIC}/vote?room=${code}`;r.json({url,room:code,qr:await QR.toDataURL(url,{width:360,margin:1,color:{dark:'#160f2e',light:'#fff8ea'}})})});
+app.get('/healthz',(q,r)=>r.json({ok:true,rooms:rooms.size}));
 app.get('/api/leaderboard',(q,r)=>r.json(LB.slice(-50)));
 app.get('/api/report/:id',(q,r)=>{
  if(!/^[a-f0-9]{10}$/.test(q.params.id))return r.sendStatus(404);

@@ -3,3 +3,6 @@ leaderboard.json
 node_modules/
 *.png
 pp.log
+reports/
+.impeccable/
+.claude/settings.local.json

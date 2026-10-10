@@ -3,39 +3,38 @@
 <title>Pitch Pit room</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%23150c2b%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%279%27 fill=%27%23ffc24a%27/%3E%3C/svg%3E"><link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/pitch.css">
 <style>
-body{display:grid;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:auto minmax(0,1fr);gap:14px 20px;height:100vh;padding:14px 20px 18px;overflow:hidden}
-header.top{grid-column:1;display:flex;align-items:center;gap:18px 26px;flex-wrap:wrap;min-height:64px}
-.brand{font:800 30px/1 var(--display);letter-spacing:-.02em;text-decoration:none;display:flex;align-items:center;gap:10px}
-.brand i{width:14px;height:14px;border-radius:50%;background:var(--gold)}
-.roomchip{display:flex;align-items:center;gap:10px;font-weight:700}
+/* One screen, no page scroll: header, then a main area that always fits the viewport. */
+body{display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;height:100vh;height:100dvh;padding:12px 24px 16px;overflow:hidden}
+header.top{display:flex;align-items:center;gap:12px 22px;min-height:56px;flex-wrap:wrap}
+.brand{font:800 28px/1 var(--display);letter-spacing:-.02em;text-decoration:none;display:flex;align-items:center;gap:10px}
+.brand i{width:13px;height:13px;border-radius:50%;background:var(--gold)}
+.roomchip{display:flex;align-items:center;gap:12px;font-weight:700}
 .roomchip b{font:800 22px var(--display);letter-spacing:.06em}
-ol.steps{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0 auto 0 0;padding:0}
+ol.steps{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0;flex:1}
 ol.steps li{padding:5px 14px;border-radius:99px;font-weight:600;font-size:16px;color:var(--dim);box-shadow:inset 0 0 0 1.5px var(--line)}
 ol.steps li.done{color:var(--ink)}
 ol.steps li[aria-current=step]{background:var(--ink);color:#1b1230;box-shadow:none;font-weight:800}
-#clock{display:grid;justify-items:end;min-width:130px}
-#clock .n{font:800 44px/1 var(--display);font-variant-numeric:tabular-nums}
+#clock{display:grid;justify-items:end;min-width:120px}
+#clock .n{font:800 40px/1 var(--display);font-variant-numeric:tabular-nums}
 #clock .l{font-size:16px;color:var(--dim)}
-#clock .bar{width:130px;height:6px;border-radius:9px;background:rgba(255,255,255,.14);margin-top:4px;overflow:hidden}
+#clock .bar{width:120px;height:6px;border-radius:9px;background:rgba(255,255,255,.14);margin-top:4px;overflow:hidden}
 #clock .bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .25s linear}
 #clock.low .n{color:var(--out)}#clock.low .bar i{background:var(--out)}
-main{grid-column:1;min-height:0;display:flex;flex-direction:column;overflow:auto;padding:2px}
-main>section{min-height:0}
-#v-live{flex:1;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:16px}
+main{min-height:0;display:flex;flex-direction:column}
+main>section{min-height:0;flex:1}
 
-/* the set: three investors under their own spotlights */
-.set{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:0 10px}
-.seat{position:relative;display:grid;justify-items:center;text-align:center;padding-top:26px;isolation:isolate}
-.seat::before{content:"";position:absolute;inset:-30px 4% 40% 4%;z-index:-1;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 42%,transparent),transparent 86%);clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);opacity:.55}
-.seat .port{height:clamp(120px,24vh,230px)}
-.seat h2{font-size:26px;color:var(--c)}.seat p{color:var(--dim);font-size:17px}
-.floor{height:10px;border-radius:99px;margin:6px 10px 0;background:linear-gradient(90deg,transparent,rgba(255,194,74,.5),transparent)}
-
-/* the pitch card */
-.pitchcard{position:relative;background:var(--ink);color:#1b1230;border-radius:22px;padding:34px 44px 38px;max-width:1040px;width:100%;margin:12px auto 24px;box-shadow:0 34px 60px -26px rgba(0,0,0,.8);transform:rotate(-.35deg);
+/* ---------- setup: the panel on the left, the pitch card on the right; the Walk on stage button never leaves the screen ---------- */
+#v-setup{display:grid;grid-template-columns:minmax(190px,280px) minmax(0,1fr);gap:clamp(20px,3vw,44px);min-height:0}
+.panelcol{display:flex;flex-direction:column;justify-content:center;gap:clamp(6px,2.4vh,26px);min-height:0}
+.seat{position:relative;display:grid;justify-items:center;text-align:center;isolation:isolate;padding-top:8px}
+.seat::before{content:"";position:absolute;inset:-18px 6% 28% 6%;z-index:-1;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 40%,transparent),transparent 90%);clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);opacity:.5}
+.seat .port{height:clamp(72px,15vh,150px)}
+.seat h2{font-size:clamp(19px,2.6vh,25px);color:var(--c);margin-top:2px}.seat p{color:var(--dim);font-size:16px}
+.pitchcard{display:flex;flex-direction:column;min-height:0;max-height:100%;background-color:var(--ink);color:#1b1230;border-radius:22px;overflow:hidden;box-shadow:0 30px 60px -28px rgba(0,0,0,.8);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .07 0 0 0 0 .2 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.pitchcard h1{font-size:clamp(30px,3vw,46px);line-height:1.04;margin-bottom:14px;color:#1b1230}
-.sentence{font:600 clamp(23px,2.3vw,34px)/2.05 var(--display);letter-spacing:-.01em}
+.pc-body{flex:1;min-height:0;overflow:auto;padding:clamp(18px,3.6vh,34px) clamp(22px,3vw,44px) 10px}
+.pc-body h1{font-size:clamp(26px,4.4vh,44px);line-height:1.04;margin-bottom:clamp(6px,1.6vh,14px);color:#1b1230}
+.sentence{font:600 clamp(19px,3.15vh,31px)/1.95 var(--display);letter-spacing:-.01em}
 .sentence label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .il{font:inherit;color:#3d1fb4;background:transparent;border:0;border-bottom:3px dashed #1b1230;border-radius:0;padding:0 4px;margin:0 2px;min-width:5ch;max-width:100%;caret-color:#c27a00}
 .il::placeholder{color:#6f6290;opacity:1;font-weight:500}
@@ -43,48 +42,52 @@ main>section{min-height:0}
 .il.bad{border-bottom-color:#c0182c;background:rgba(192,24,44,.1)}
 .il.wide{width:100%;display:block}
 .il.num{width:5ch;text-align:center;font-weight:800}
-.chips.paper button{border-color:#1b1230;color:#1b1230;font-size:18px;min-height:44px}
-.chips.paper button[aria-pressed=true]{background:#1b1230;color:var(--ink)}
-.valuation{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin:12px 0 4px;padding-top:14px;border-top:2px solid rgba(27,18,48,.2)}
-.valuation span{font:700 22px var(--display)}
-.valuation b{font:800 clamp(44px,5vw,76px)/1 var(--display);color:#8a4a00;font-variant-numeric:tabular-nums}
-.valuation small{font-size:17px;color:#4a3d6b;flex-basis:100%}
-.opts{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin:14px 0 22px}
-.opts h2{font:800 18px var(--display);margin-bottom:8px;color:#1b1230}
-.modes{display:grid;gap:10px}
-.modes button{text-align:left;padding:12px 16px;border-radius:14px;border:2px solid #1b1230;background:transparent;color:#1b1230;cursor:pointer}
-.modes button b{display:block;font:800 19px var(--display)}.modes button span{font-size:16px;color:#4a3d6b}
-.modes button[aria-pressed=true]{background:#1b1230;color:var(--ink)}.modes button[aria-pressed=true] span{color:#d8cdee}
+select.il{appearance:none;-webkit-appearance:none;padding-right:1.2em;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10'%3E%3Cpath d='M2 2l6 6 6-6' fill='none' stroke='%231b1230' stroke-width='2.5'/%3E%3C/svg%3E") right 4px center no-repeat;cursor:pointer;min-width:0}
+select.il option{font:500 18px var(--body);color:#1b1230;background:#fff3dc}
+.judge{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:clamp(8px,2vh,18px)}
+.judge button{text-align:left;padding:12px 16px;border-radius:14px;border:2px solid #1b1230;background:transparent;color:#1b1230;cursor:pointer}
+.judge button b{display:block;font:800 clamp(17px,2.5vh,20px) var(--display)}.judge button span{font-size:16px;color:#4a3d6b}
+.judge button[aria-pressed=true]{background:#1b1230;color:var(--ink)}.judge button[aria-pressed=true] span{color:#d8cdee}
+.pc-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 28px;padding:14px clamp(22px,3vw,44px) 18px;border-top:2px solid rgba(27,18,48,.2);background:rgba(255,243,220,.97)}
+.valuation{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px;flex:1 1 340px;min-width:0}
+.valuation span{font:700 clamp(17px,2.4vh,21px) var(--display)}
+.valuation b{font:800 clamp(34px,5.6vh,58px)/1 var(--display);color:#8a4a00;font-variant-numeric:tabular-nums}
+.valuation small{flex-basis:100%;font-size:16px;color:#4a3d6b}
+.pc-foot .btn{flex:none}
+.pc-foot .err{flex-basis:100%;color:#a1101f;font-weight:700;min-height:0;margin:0}
+.pc-foot .err:empty{display:none}
 .btn.ink{background:#1b1230;color:var(--ink)}.btn.ink:hover:not(:disabled){background:#2c1d57}
-.pitchcard .err{color:#a1101f;font-weight:700;min-height:26px;margin-bottom:6px}
-.waiting{max-width:760px;margin:20px auto;text-align:center}
-.waiting h1{font-size:clamp(32px,3vw,48px);margin-bottom:10px}
+.waiting{align-self:center;max-width:640px}
+.waiting h1{font-size:clamp(32px,3vw,46px);margin-bottom:10px}
 
-/* live: investor cards */
+/* ---------- live ---------- */
+#v-live{display:grid;gap:16px;min-height:0}
+#v-live[data-mode=strip]{grid-template-rows:auto minmax(0,1fr) auto}
+#v-live[data-mode=full]{grid-template-rows:minmax(0,1fr) auto}
 #cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;min-height:0}
 .card{position:relative;display:flex;flex-direction:column;min-height:0;border-radius:22px;padding:14px 18px 18px;overflow:hidden;
   background:linear-gradient(180deg,color-mix(in srgb,var(--c) 16%,var(--panel)),var(--panel) 52%);border:1.5px solid color-mix(in srgb,var(--c) 34%,transparent);transition:transform .35s,border-color .35s,filter .5s}
-.card.on{transform:translateY(-4px);border-color:var(--c);box-shadow:0 20px 40px -18px color-mix(in srgb,var(--c) 80%,#000)}
+.card.on{border-color:var(--c);box-shadow:0 18px 36px -20px color-mix(in srgb,var(--c) 85%,#000)}
 .card.out{filter:grayscale(.9) brightness(.75)}
 .card .voice-orb{position:absolute;top:10px;right:10px;z-index:2}
-.card .port{height:clamp(110px,22vh,250px);flex:none}
-.card h2{font-size:28px;margin-top:2px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.card h2 span{font:600 18px var(--body);color:var(--c)}
+.card .port{height:clamp(96px,20vh,240px);flex:none}
+.card h2{font-size:26px;margin-top:2px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2 span{font:600 17px var(--body);color:var(--c)}
 .meter{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;margin:8px 0 2px}
-.meter .lb{font-size:17px;color:var(--dim)}
+.meter .lb{font-size:16px;color:var(--dim)}
 .track{position:relative;height:14px;border-radius:99px;background:rgba(255,255,255,.12)}
 .track i{display:block;height:100%;width:50%;border-radius:99px;background:var(--c);transition:width .9s cubic-bezier(.2,.8,.2,1)}
 .track u{position:absolute;left:40%;top:-5px;bottom:-5px;width:2px;background:var(--ink);opacity:.6}
-.val{font:800 34px/1 var(--display);font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
+.val{font:800 32px/1 var(--display);font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
 .moodrow{display:flex;justify-content:space-between;align-items:center;font-size:17px;min-height:30px;color:var(--dim)}
 .mood{padding:2px 12px;border-radius:99px;background:rgba(255,255,255,.1);color:var(--ink);font-weight:700}
 .dl{font:800 20px var(--display)}.dl.up{color:var(--deal)}.dl.dn{color:var(--out)}
-.bub{flex:1;min-height:90px;margin-top:10px;padding:14px 16px;border-radius:16px;background:var(--ink);color:#1b1230;font:600 clamp(20px,1.55vw,27px)/1.3 var(--body);overflow:auto}
+.bub{flex:1;min-height:80px;margin-top:10px;padding:14px 16px;border-radius:16px;background:var(--ink);color:#1b1230;font:600 clamp(19px,1.5vw,26px)/1.3 var(--body);overflow:auto}
 .bub.empty{background:rgba(255,255,255,.07);color:var(--dim);font-weight:500;font-size:18px}
-body[data-phase=GRILLING] .card:not(.on) .bub,body[data-phase=ANSWER] .card:not(.on) .bub{opacity:.72;max-height:7.2em}
+#cards:not(.strip) .card:has(.offer) .bub{display:none}
 .ex{margin-top:10px}
 .offer{display:grid;gap:2px;width:100%;text-align:left;padding:12px 16px;border-radius:16px;border:2.5px solid var(--c);background:var(--raise);color:var(--ink);cursor:default}
-.offer .amt{font:800 clamp(26px,2.1vw,38px)/1.1 var(--display)}
+.offer .amt{font:800 clamp(24px,2.1vw,36px)/1.1 var(--display)}
 .offer .impl{font-size:19px;font-weight:700;color:var(--gold)}
 .offer .cond{font-size:18px;color:var(--ink)}
 .offer .act{font-size:17px;font-weight:800;color:var(--dim);margin-top:4px}
@@ -92,51 +95,85 @@ body[data-phase=GRILLING] .card:not(.on) .bub,body[data-phase=ANSWER] .card:not(
 .offer.live .act{color:var(--ink)}
 .offer.armed{background:var(--gold);color:#241500;border-color:var(--gold)}
 .offer.armed .impl,.offer.armed .cond,.offer.armed .act{color:#241500}
-.stamp-out{position:absolute;left:50%;top:26%;transform:translate(-50%,-50%) rotate(-11deg);font:800 clamp(34px,3.6vw,60px) var(--display);color:#ff6b78;border:6px solid #ff6b78;border-radius:12px;padding:0 16px;background:rgba(21,12,43,.78);animation:slam2 .4s cubic-bezier(.2,1.4,.4,1);pointer-events:none;white-space:nowrap}
+.stamp-out{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%) rotate(-11deg);font:800 clamp(30px,3.4vw,56px) var(--display);color:#ff6b78;border:6px solid #ff6b78;border-radius:12px;padding:0 16px;background:rgba(21,12,43,.78);animation:slam2 .4s cubic-bezier(.2,1.4,.4,1);pointer-events:none;white-space:nowrap}
 @keyframes slam2{from{transform:translate(-50%,-50%) rotate(-11deg) scale(2.2);opacity:0}to{transform:translate(-50%,-50%) rotate(-11deg) scale(1);opacity:1}}
 
-/* live: dock */
-#dock{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;height:clamp(190px,30vh,300px)}
-#ctl{display:flex;flex-direction:column;gap:10px;justify-content:center;overflow:auto}
-#ctl .lead{font:800 24px/1.15 var(--display)}
-.microw{display:flex;align-items:center;gap:18px}
-.microw .voice-orb{width:92px;height:92px;flex:none}
-#ctl textarea{width:100%;height:78px;resize:none;border-radius:12px;border:1.5px solid var(--field);background:rgba(10,4,25,.4);padding:10px 14px;font-size:18px}
-#ctl textarea:focus{border-color:var(--gold)}
-.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-#txp{display:flex;flex-direction:column}
-#tx{overflow:auto;display:flex;flex-direction:column;gap:10px;font-size:18px;flex:1}
-#tx p{margin:0}
+/* strip mode (founder, before decisions): investors shrink to one row, the speaker's words get the room */
+#cards.strip .card{display:grid;grid-template-columns:clamp(64px,9vh,100px) minmax(0,1fr);grid-template-areas:"p h" "p m" "p d";align-items:center;gap:2px 14px;padding:10px 16px}
+#cards.strip .card .port{grid-area:p;height:clamp(64px,9vh,100px)}
+#cards.strip .card h2{grid-area:h;font-size:20px;margin:0}
+#cards.strip .card h2 span{display:none}
+#cards.strip .card h2{padding-right:40px}
+#cards.strip .card .meter{grid-area:m;margin:0}
+#cards.strip .card .moodrow{grid-area:d;min-height:26px;font-size:16px}
+#cards.strip .card .val{font-size:26px}
+#cards.strip .card .bub,#cards.strip .card .ex{display:none}
+#cards.strip .card .voice-orb{width:44px;height:44px;top:8px;right:8px}
+#cards.strip .card.on{transform:none}
+#cards.strip .stamp-out{top:50%;font-size:26px;border-width:4px}
+.now{display:flex;flex-direction:column;justify-content:center;gap:14px;padding:clamp(18px,3vh,32px) clamp(22px,3vw,44px);overflow:auto;min-height:0}
+.now .head{display:flex;align-items:center;gap:14px;font:800 clamp(20px,2.8vh,26px) var(--display)}
+.now .head .mood{font:700 17px var(--body)}
+#nowtext{font:600 clamp(24px,4.2vh,44px)/1.28 var(--body);text-wrap:pretty;max-width:52ch}
+#nowtext.empty{color:var(--dim);font-weight:500}
+#nowtips{display:grid;gap:10px;font-size:clamp(18px,2.6vh,23px)}
+#nowtips h2{font-size:clamp(22px,3.2vh,30px)}
+#nowtips ul{margin:0;padding-left:24px;display:grid;gap:8px}
 
-/* rail */
-aside#rail{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:auto}
+/* the founder's dock: mic, answer, send, with room between them */
+#dock{padding:16px 20px}
+#ctl{display:grid;gap:12px}
+#ctl .lead{font:800 clamp(20px,2.8vh,24px)/1.2 var(--display)}
+.ctlrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:20px;align-items:stretch}
+.micbox{display:flex;align-items:center;gap:14px}
+.micbox .voice-orb{width:64px;height:64px;flex:none}
+#ctl textarea{width:100%;height:100%;min-height:clamp(64px,10vh,110px);resize:none;border-radius:14px;border:1.5px solid var(--field);background:rgba(10,4,25,.4);padding:12px 16px;font-size:19px}
+#ctl textarea:focus{border-color:var(--gold)}
+.sendcol{display:flex;flex-direction:column;justify-content:flex-end;gap:12px;min-width:170px}
+.hintrow{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--dim);font-size:16px}
+.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.btn.xl{min-height:60px;font-size:21px;padding:12px 30px;border-radius:14px}
+
+/* ---------- room panel: a drawer, closed by default ---------- */
+#rail{position:fixed;top:0;right:0;bottom:0;width:min(400px,100vw);z-index:20;background:var(--bg2);border-left:1px solid var(--line);padding:16px;overflow:auto;display:flex;flex-direction:column;gap:14px;box-shadow:-30px 0 50px -30px rgba(0,0,0,.8)}
+#rail .rh{display:flex;align-items:center;justify-content:space-between}
+#rail .rh h2{font-size:24px}
 .share{text-align:center}
-.share img{width:210px;height:210px;border-radius:14px;display:block;margin:0 auto 10px;background:var(--ink)}
-.share .code{font:800 48px/1 var(--display);letter-spacing:.1em;padding-left:.1em}
-.share .row{justify-content:center;margin-top:10px}
+.share img{width:200px;height:200px;border-radius:14px;display:block;margin:0 auto 10px;background:var(--ink)}
+.share .code{font:800 44px/1 var(--display);letter-spacing:.1em;padding-left:.1em}
+.share .row{justify-content:center;margin-top:12px}
 .crowd .l{display:flex;justify-content:space-between;font-size:17px;margin:8px 0 4px}
 .bar{height:12px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;display:flex}
 .bar i{display:block;height:100%;transition:width .4s}
 #hype{background:var(--gold);width:0}
 #vinv{background:var(--deal)}#vpass{background:var(--out)}
 #cnt{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
-#lb h3{margin-top:14px;font-size:18px}
+#tx{display:flex;flex-direction:column;gap:10px;font-size:17px;max-height:260px;overflow:auto}
+#tx p{margin:0}
+#lb h3{margin-top:12px;font-size:18px}
 #lb ol{margin:4px 0 0;padding-left:24px;color:var(--dim);font-size:17px}
 #lb li b{color:var(--ink);font-weight:700}
 .tools summary{cursor:pointer;font:800 18px var(--display)}
-.tools .row{margin-top:10px}
+.tools .row{margin-top:12px}
 
 #float{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:4}
 .em{position:absolute;bottom:-60px;font-size:46px;animation:rise 3.4s ease-in forwards}
 @keyframes rise{to{transform:translateY(-118vh) rotate(24deg);opacity:.2}}
 .cf{position:fixed;top:-20px;width:10px;height:15px;animation:fall 3.2s linear forwards;z-index:30;pointer-events:none}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
-#v-report{padding:6px 4px 40px}
-#gone{grid-column:1/3;grid-row:1/3;display:grid;place-content:center;text-align:center;gap:14px}
+#v-report{overflow:auto;padding:6px 4px 40px}
+#gone{grid-row:1/3;display:grid;place-content:center;text-align:center;gap:14px}
 [hidden]{display:none!important}
 body[data-role=watch] .hostonly{display:none!important}
 
-@media (max-width:1180px){body{grid-template-columns:1fr;height:auto;overflow:auto}aside#rail{grid-column:1;grid-row:auto}#cards,#dock,.set,.opts{grid-template-columns:1fr}#dock{height:auto}.pitchcard{padding:24px 22px}.set .port{height:120px}}
+@media (max-width:1560px){ol.steps li:not([aria-current]){display:none}ol.steps li[aria-current]::after{content:" · step " attr(data-n) " of 7";font-weight:600;color:#4a3d6b}}
+@media (max-width:980px){
+  body{height:auto;overflow:auto;padding:10px 14px 24px}
+  #v-setup{grid-template-columns:1fr;overflow:visible}.panelcol{flex-direction:row;justify-content:space-around}.seat p{display:none}
+  .pitchcard{max-height:none;overflow:visible}.pc-body{overflow:visible}.pc-foot{position:sticky;bottom:0}
+  #cards,.judge{grid-template-columns:1fr}.ctlrow{grid-template-columns:1fr}.sendcol{flex-direction:row}
+  #cards.strip{grid-template-columns:1fr}
+}
 </style></head>
 <body data-role="watch" data-phase="WAITING">
 <header class="top">
@@ -144,47 +181,55 @@ body[data-role=watch] .hostonly{display:none!important}
   <div class="roomchip"><span class="dim">Room</span><b id="rcode"></b><button class="btn ghost small" id="copyinvite" type="button">Copy invite link</button></div>
   <ol class="steps" id="steps" aria-label="Progress"></ol>
   <div id="clock" role="timer"><span class="n" id="cn"></span><span class="l" id="cl"></span><div class="bar" aria-hidden="true"><i id="cb"></i></div></div>
+  <button class="btn ghost small" id="panelbtn" type="button" aria-expanded="false" aria-controls="rail">Room panel</button>
 </header>
 
 <main id="main">
   <section id="v-setup" aria-label="Pitch setup">
-    <div class="set" id="set"></div><div class="floor" aria-hidden="true"></div>
+    <div class="panelcol" id="set"></div>
     <form class="pitchcard hostonly" id="pf" autocomplete="off" novalidate>
-      <h1>Walk on stage</h1>
-      <p class="sentence">
-        <label for="f-name">Your name</label>Hi, I'm <input class="il" id="f-name" maxlength="40" placeholder="your name" required>.
-        I'm pitching <label for="f-su">Startup name</label><input class="il" id="f-su" maxlength="40" placeholder="startup name" required>,
-        <label for="f-ds">What it does and for whom</label><input class="il wide" id="f-ds" maxlength="200" placeholder="what it does, and for whom">
-        We're at the <span class="chips paper" id="stage" role="group" aria-label="Stage"></span> stage,
-        and so far we have <label for="f-tr">Traction so far</label><input class="il wide" id="f-tr" maxlength="160" placeholder="customers, revenue, pilots, or nothing yet">
-        I'm raising ₹<label for="f-am">Amount in lakh</label><input class="il num" id="f-am" type="number" min="1" step="any" value="50" inputmode="decimal"> lakh for
-        <label for="f-eq">Equity percent</label><input class="il num" id="f-eq" type="number" min="0.1" max="100" step="any" value="10" inputmode="decimal">% of the company.
-      </p>
-      <div class="valuation" aria-live="polite"><span>That values it at</span><b id="val">₹5 Cr</b><small>100 lakh is 1 crore. The panel will do this maths in about two seconds.</small></div>
-      <div class="opts">
-        <div><h2>How should they judge?</h2><div class="modes" id="modes">
+      <div class="pc-body">
+        <h1>Walk on stage</h1>
+        <p class="sentence">
+          <label for="f-name">Your name</label>Hi, I'm <input class="il" id="f-name" maxlength="40" placeholder="your name" required>.
+          I'm pitching <label for="f-su">Startup name</label><input class="il" id="f-su" maxlength="40" placeholder="startup name" required>:
+          <label for="f-ds">What it does and for whom</label><input class="il wide" id="f-ds" maxlength="200" placeholder="what it does, and for whom">
+          We're at the <label for="f-stage">Stage</label><select class="il" id="f-stage"><option>Idea</option><option>Prototype</option><option>Launched</option><option>Earning revenue</option></select> stage, and so far we have
+          <label for="f-tr">Traction so far</label><input class="il wide" id="f-tr" maxlength="160" placeholder="customers, revenue, pilots, or nothing yet">
+          I'm raising ₹<label for="f-am">Amount in lakh</label><input class="il num" id="f-am" type="number" min="1" step="any" value="50" inputmode="decimal"> lakh for
+          <label for="f-eq">Equity percent</label><input class="il num" id="f-eq" type="number" min="0.1" max="100" step="any" value="10" inputmode="decimal">% of the company, and I'll pitch for
+          <label for="f-secs">Pitch length</label><select class="il" id="f-secs"><option value="60">60 seconds</option><option value="90" selected>90 seconds</option><option value="120">2 minutes</option><option value="180">3 minutes</option></select>.
+        </p>
+        <div class="judge" id="modes" role="group" aria-label="How should they judge?">
           <button type="button" data-m="honest" aria-pressed="true"><b>Honest feedback</b><span>Sharper questions, one real insight per answer</span></button>
-          <button type="button" data-m="show" aria-pressed="false"><b>Show mode</b><span>Same rigour, more roasting and drama</span></button></div></div>
-        <div><h2>Pitch length</h2><div class="chips paper" id="secs" role="group" aria-label="Pitch length"></div>
-          <p style="color:#4a3d6b;font-size:16px;margin-top:10px">Your browser will ask for the microphone when you walk on. You can always type instead.</p></div>
+          <button type="button" data-m="show" aria-pressed="false"><b>Show mode</b><span>Same rigour, more roasting and drama</span></button>
+        </div>
       </div>
-      <p class="err" id="ferr" role="alert"></p>
-      <button class="btn big ink" type="submit">Walk on stage</button>
+      <div class="pc-foot">
+        <div class="valuation" aria-live="polite"><span>That values it at</span><b id="val">₹5 Cr</b><small>100 lakh is 1 crore. The mic permission is asked next; typing always works.</small></div>
+        <p class="err" id="ferr" role="alert"></p>
+        <button class="btn xl ink" type="submit">Walk on stage</button>
+      </div>
     </form>
-    <div class="waiting" id="waiting" hidden><h1>Waiting for the founder</h1><p class="dim">The pitch starts as soon as they walk on. Scan the code on the right to join from your phone, or just watch from here.</p></div>
+    <div class="waiting" id="waiting" hidden><h1>Waiting for the founder</h1><p class="dim">The pitch starts as soon as they walk on. Open the Room panel to scan the code and join from your phone, or just watch from here.</p></div>
   </section>
 
-  <section id="v-live" aria-label="The panel" hidden>
+  <section id="v-live" aria-label="The panel" data-mode="full" hidden>
     <div id="cards"></div>
-    <div id="dock"><div class="panel" id="ctl"></div><div class="panel" id="txp"><h2>Transcript</h2><div id="tx" role="log" aria-live="polite" tabindex="0" aria-label="Transcript"></div></div></div>
+    <section class="panel now" id="nowp" aria-label="What the panel is saying" hidden>
+      <div id="nowspeech"><div class="head"><span class="who" id="nowwho"></span><span class="mood" id="nowmood"></span></div><p id="nowtext" class="empty" aria-live="polite">The panel is listening.</p></div>
+      <div id="nowtips" hidden><h2>What to cover</h2><ul><li>Who it is for, and the problem they feel today</li><li>Why they pay: price, margin, what a customer costs you</li><li>Proof so far: customers, revenue, pilots</li><li>What you will do with this money</li></ul></div>
+    </section>
+    <div class="panel" id="dock"><div id="ctl"></div></div>
   </section>
 
   <section id="v-report" aria-label="Pitch report" hidden></section>
 </main>
 
-<aside id="rail">
+<aside id="rail" aria-label="Room panel" hidden>
+  <div class="rh"><h2>Room panel</h2><button class="btn ghost small" id="railclose" type="button">Close</button></div>
   <section class="panel share" aria-label="Invite">
-    <img id="qr" alt="QR code to join this room from a phone" width="210" height="210">
+    <img id="qr" alt="QR code to join this room from a phone" width="200" height="200">
     <div class="code" id="scode"></div>
     <p class="dim" id="jn">Scan to react and vote</p>
     <div class="row"><button class="btn ghost small" id="copyinvite2" type="button">Copy invite link</button><button class="btn ghost small" id="copywatch" type="button">Copy watch link</button></div>
@@ -195,6 +240,7 @@ body[data-role=watch] .hostonly{display:none!important}
     <div class="l"><span>Would invest</span><span id="vt" class="dim num">no votes yet</span></div><div class="bar" aria-hidden="true"><i id="vinv" style="width:0"></i><i id="vpass" style="width:0"></i></div>
     <div id="cnt" aria-label="Reactions so far"></div>
   </section>
+  <section class="panel" id="txp"><h2>Transcript</h2><div id="tx" role="log" aria-live="polite" tabindex="0" aria-label="Transcript"></div></section>
   <section class="panel" id="lb" aria-label="Hall of fame"></section>
   <details class="panel tools hostonly" id="tools"><summary>Host tools</summary>
     <div class="row"><button class="btn ghost small" id="t-skip" type="button">Skip this wait</button><button class="btn ghost small" id="t-votes" type="button">Reset votes</button><button class="btn ghost small" id="t-new" type="button">Start over</button></div>
@@ -209,15 +255,15 @@ body[data-role=watch] .hostonly{display:none!important}
 <script>
 const params=new URLSearchParams(location.search),CODE=(params.get('room')||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,6);
 const S=io();
-let st={phase:'WAITING',inv:{},lb:[],votes:{invest:0,pass:0},tx:[]},host=false,sent=false,rt=[],cnt={},T={},rec=null,confOn=false,resKey='',prevInt={},portKey={},live={},ctlKey='',txN=-1,inviteUrl='';
+let st={phase:'WAITING',inv:{},lb:[],votes:{invest:0,pass:0},tx:[]},host=false,sent=false,rt=[],cnt={},T={},rec=null,confOn=false,resKey='',prevInt={},portKey={},live={},ctlKey='',txN=-1,inviteUrl='',nowWho=null;
 const watchUrl=location.origin+'/stage?room='+CODE;
-let setupMode='honest',setupStage='Idea',setupSecs=90,offline=false;
+let setupMode='honest',offline=false;
 if(!CODE)location.replace('/');
 
 /* ---------- join ---------- */
 S.on('connect',()=>{if(offline){offline=false;toast('Back online')}
   S.emit('join',{role:'stage',room:CODE,token:localStorage.getItem('pp_host_'+CODE)||''},a=>{
-    if(a&&a.err){$('gone').hidden=false;$('gone-p').textContent=a.err;document.querySelector('header.top').hidden=$('main').hidden=$('rail').hidden=true;return}
+    if(a&&a.err){$('gone').hidden=false;$('gone-p').textContent=a.err;document.querySelector('header.top').hidden=$('main').hidden=true;return}
     host=a.role=='stage';document.body.dataset.role=host?'host':'watch';render()})});
 S.on('disconnect',()=>{offline=true;toast('Connection lost. Reconnecting…')});
 S.on('state',s=>{st=s;render()});
@@ -226,6 +272,9 @@ $('rcode').textContent=$('scode').textContent=fmtCode(CODE);
 document.title='Room '+fmtCode(CODE)+' · Pitch Pit';
 $('copyinvite').onclick=$('copyinvite2').onclick=()=>copyText(inviteUrl||location.origin+'/vote?room='+CODE,'Invite link copied');
 $('copywatch').onclick=()=>copyText(watchUrl,'Watch link copied');
+const drawer=open=>{$('rail').hidden=!open;$('panelbtn').setAttribute('aria-expanded',open);if(open)$('railclose').focus();else $('panelbtn').focus()};
+$('panelbtn').onclick=()=>drawer($('rail').hidden);$('railclose').onclick=()=>drawer(false);
+addEventListener('keydown',e=>{if(e.key=='Escape'&&!$('rail').hidden)drawer(false)});
 
 /* ---------- the set (investor seats) and the live cards ---------- */
 $('set').innerHTML=IDS.map(i=>`<figure class="seat" data-i="${i}" style="margin:0"><div class="port" id="sp-${i}">${portrait(i,'curious')}</div><h2>${NM[i]}</h2><p>${TAG[i]}</p></figure>`).join('');
@@ -236,11 +285,8 @@ $('cards').innerHTML=IDS.map(i=>`<article class="card" data-i="${i}" id="c-${i}"
   <div class="bub empty" tabindex="0" aria-live="polite">Waiting for the pitch</div><div class="ex"></div></article>`).join('');
 
 /* ---------- the pitch card ---------- */
-$('stage').innerHTML=['Idea','Prototype','Launched','Earning revenue'].map((s,k)=>`<button type="button" aria-pressed="${k==0}">${s}</button>`).join('');
-$('secs').innerHTML=[60,90,120,180].map(n=>`<button type="button" data-s="${n}" aria-pressed="${n==90}">${n} seconds</button>`).join('');
-const pressGroup=(box,cb)=>box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...box.children].forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b)});
-pressGroup($('stage'),b=>setupStage=b.textContent);pressGroup($('secs'),b=>setupSecs=+b.dataset.s);pressGroup($('modes'),b=>setupMode=b.dataset.m);
-function fitInputs(){document.querySelectorAll('.il:not(.wide):not(.num)').forEach(el=>{el.style.width=Math.max(el.placeholder.length,el.value.length+1)+'ch'})}
+pressMode();function pressMode(){const box=$('modes');box.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...box.children].forEach(x=>x.setAttribute('aria-pressed',x===b));setupMode=b.dataset.m})}
+function fitInputs(){document.querySelectorAll('.il:not(.wide):not(.num):not(select)').forEach(el=>{el.style.width=Math.max(el.placeholder.length,el.value.length+1)+'ch'})}
 // the panel's faces react to the size of the ask while you type
 const moodsFor=v=>v>5000?{vikram:'angry',zara:'bored',uncle:'angry'}:v>2000?{vikram:'bored',zara:'curious',uncle:'angry'}:v>600?{vikram:'curious',zara:'excited',uncle:'curious'}:{vikram:'curious',zara:'excited',uncle:'excited'};
 function updateAsk(){const a=+$('f-am').value,e=+$('f-eq').value,v=a>0&&e>0?a*100/e:0;
@@ -251,10 +297,10 @@ $('pf').addEventListener('submit',e=>{e.preventDefault();
   const need=[['f-name','Add your name'],['f-su','Add your startup name']].find(([id])=>!$(id).value.trim());
   const a=+$('f-am').value,q=+$('f-eq').value;
   const err=need?need[1]:!(a>0)?'Enter how much you are asking for, in lakh':!(q>0&&q<=100)?'Equity must be between 0 and 100 percent':'';
-  $('ferr').textContent=err;if(err){const el=need?$(need[0]):!(a>0)?$('f-am'):$('f-eq');el.classList.add('bad');el.focus();return}
+  $('ferr').textContent=err;if(err){const el=need?$(need[0]):!(a>0)?$('f-am'):$('f-eq');el.classList.add('bad');el.focus();el.scrollIntoView({block:'center'});return}
   // ask for the mic now, inside this click, so the permission prompt never lands mid-pitch
   audio();navigator.mediaDevices&&navigator.mediaDevices.getUserMedia({audio:true}).then(s=>s.getTracks().forEach(t=>t.stop())).catch(()=>{});
-  S.emit('setup',{name:$('f-name').value,startup:$('f-su').value,desc:$('f-ds').value,stage:setupStage,traction:$('f-tr').value,mode:setupMode,secs:setupSecs,amount:a,equity:q})});
+  S.emit('setup',{name:$('f-name').value,startup:$('f-su').value,desc:$('f-ds').value,stage:$('f-stage').value,traction:$('f-tr').value,mode:setupMode,secs:+$('f-secs').value,amount:a,equity:q})});
 
 /* ---------- sound effects ---------- */
 let ac=null,ana=null;
@@ -266,7 +312,7 @@ const SFX={out:()=>{beep(300,.15,'square',.08);beep(150,.4,'sawtooth',.1,.15)},o
 let Q=[],playing=false,gen=0,cur=null,speaker=null,pcmSrcs=[],orbP=null,mic=null,micBase='',micFinal=null,micDone=null,micT0=0,micTick=0;
 const ORB={};IDS.forEach(i=>{ORB[i]=VoiceOrb.create($('o-'+i));ORB[i].start()});
 const speaking=(i,on)=>{const c=$('c-'+i);c&&c.classList.toggle('talk',on);speaker=on?i:(speaker===i?null:speaker);ORB[i].setState(on?'speaking':live[i]?'thinking':'idle')};
-const fetchAudio=(inv,text,mood)=>fetch(`/api/tts?inv=${inv}&mood=${mood||''}&text=${encodeURIComponent(text)}`).then(r=>r.ok?r:Promise.reject(r.status));
+const fetchAudio=(inv,text,mood)=>fetch(`/api/tts?inv=${inv}&mood=${mood||''}&text=${encodeURIComponent(text)}`,{headers:{'x-room':CODE,'x-token':localStorage.getItem('pp_host_'+CODE)||''}}).then(r=>r.ok?r:Promise.reject(r.status));
 function playUrl(url){return new Promise((res,rej)=>{audio();const a=cur=new Audio(url);try{ac.createMediaElementSource(a).connect(ana)}catch{}const t=setTimeout(res,30000);a.onended=()=>{clearTimeout(t);res()};a.onerror=()=>{clearTimeout(t);rej()};a.play().catch(e=>{clearTimeout(t);rej(e)})})}
 async function playPcm(r,my){audio();const reader=r.body.getReader();let carry=new Uint8Array(0),next=0;
   for(;;){const {value,done}=await reader.read();if(my!==gen){reader.cancel();return}
@@ -278,7 +324,7 @@ async function playPcm(r,my){audio();const reader=r.body.getReader();let carry=n
   await sleep(Math.max(0,(next-ac.currentTime)*1000)+60)}
 async function playResponse(r,my){if((r.headers.get('content-type')||'').startsWith('audio/mpeg'))return playUrl(URL.createObjectURL(await r.blob()));return playPcm(r,my)}
 function browserSay(inv,text){return new Promise(res=>{try{const u=new SpeechSynthesisUtterance(text),v=speechSynthesis.getVoices().filter(x=>/^en/i.test(x.lang));u.voice=v[IDS.indexOf(inv)%(v.length||1)]||null;u.lang='en-IN';u.pitch={vikram:.7,zara:1.5,uncle:.5}[inv];u.rate={vikram:.95,zara:1.2,uncle:.85}[inv];u.onend=u.onerror=res;speechSynthesis.speak(u)}catch{res()}})}
-// the bubble reveals each sentence as it starts to be spoken, so the audience reads along with the voice instead of ahead of it
+// the caption reveals each sentence as it starts to be spoken, so the audience reads along with the voice instead of ahead of it
 async function pump(){if(playing)return;playing=true;
   while(Q.length){const it=Q.shift();if(it.g!==gen)continue;const t=it.t;speaking(t.inv,true);t.shown=(t.shown?t.shown+' ':'')+it.s;bub(t.inv,t.shown);
     try{await playResponse(await it.p,it.g)}catch{if(it.g===gen)await browserSay(t.inv,it.s)}
@@ -295,18 +341,19 @@ function levels(an){const f=new Uint8Array(an.frequencyBinCount),t=new Uint8Arra
   IDS.forEach(i=>{if(i===speaker&&ana){const [b,l]=levels(ana);ORB[i].setLevels(b,l)}else ORB[i].setLevels([0,0,0,0,0],0)});
   if(orbP){if(mic&&mic.an){const [b,l]=levels(mic.an);orbP.setLevels(b,l)}else orbP.setLevels([0,0,0,0,0],0)}
   requestAnimationFrame(frame)})();
-function bub(i,x,empty){const b=$('c-'+i).querySelector('.bub');b.textContent=x;b.classList.toggle('empty',!!empty)}
-S.on('turnStart',({id,inv})=>{live[inv]=1;T[id]={inv,idx:0,pend:0,text:'',shown:''};bub(inv,'…',true);ORB[inv].setState('thinking')});
+function setNow(i,text,empty){nowWho=i;const m=st.inv[i]||{};$('nowwho').textContent=NM[i];$('nowwho').dataset.i=i;$('nowmood').textContent=MOOD[m.mood]||'';$('nowtext').textContent=text;$('nowtext').classList.toggle('empty',!!empty)}
+function bub(i,x,empty){const b=$('c-'+i).querySelector('.bub');b.textContent=x;b.classList.toggle('empty',!!empty);if(host&&nowWho===i)setNow(i,x,empty)}
+S.on('turnStart',({id,inv})=>{live[inv]=1;T[id]={inv,idx:0,pend:0,text:'',shown:''};if(host)nowWho=inv;bub(inv,'…',true);ORB[inv].setState('thinking')});
 S.on('turnText',({id,text,mood})=>{const t=T[id];if(!t)return;if(mood)t.mood=mood;t.text=text;if(host)flush(t,false);else bub(t.inv,text)});
 S.on('turnEnd',({id,inv,r})=>{live[inv]=0;const t=T[id]||(T[id]={inv,idx:0,pend:0,shown:''});t.mood=t.mood||r.mood;t.text=r.speech;t.ended=1;
   if(!host){bub(inv,r.speech);ORB[inv].setState('idle');return}
   flush(t,true);if(!t.pend)bub(inv,r.speech);
   if(r.decision=='out')SFX.out();else if(r.decision=='offer')SFX.offer();check(t);if(!t.pend)ORB[inv].setState('idle');setTimeout(()=>{if(!t.done){t.done=1;S.emit('spoken')}},30000)});
 S.on('reset',()=>{gen++;Q=[];cur&&cur.pause();pcmSrcs.forEach(x=>{try{x.stop()}catch{}});pcmSrcs=[];try{speechSynthesis.cancel()}catch{};
-  T={};live={};cnt={};$('cnt').innerHTML='';IDS.forEach(i=>{speaking(i,false);ORB[i].setState('idle');bub(i,'Waiting for the pitch',true)});ctlKey='';resKey='';prevInt={};txN=-1;$('tx').innerHTML='';confOn=false;offerKey={}});
+  T={};live={};cnt={};nowWho=null;$('cnt').innerHTML='';IDS.forEach(i=>{speaking(i,false);ORB[i].setState('idle');bub(i,'Waiting for the pitch',true)});$('nowtext').textContent='The panel is listening.';$('nowtext').classList.add('empty');$('nowwho').textContent=$('nowmood').textContent='';ctlKey='';resKey='';prevInt={};txN=-1;$('tx').innerHTML='';confOn=false;offerKey={}});
 S.on('dealSfx',()=>{if(host)SFX.deal()});S.on('noDealSfx',()=>{if(host)beep(120,.9,'sawtooth',.14)});
 S.on('react',e=>{rt.push(Date.now());cnt[e]=(cnt[e]||0)+1;$('cnt').innerHTML=['🔥','💀','💸','😂'].map(x=>`<span>${x} ${cnt[x]||0}</span>`).join('');
-  if(reduced)return;const f=$('float');while(f.children.length>=40)f.firstChild.remove();const s=document.createElement('span');s.className='em';s.textContent=e;s.style.left=Math.random()*60+'%';s.onanimationend=()=>s.remove();f.appendChild(s)});
+  if(reduced)return;const f=$('float');while(f.children.length>=40)f.firstChild.remove();const s=document.createElement('span');s.className='em';s.textContent=e;s.style.left=Math.random()*90+'%';s.onanimationend=()=>s.remove();f.appendChild(s)});
 
 /* ---------- mic: tap to start, tap to stop. Gemini Live transcription when available, browser recognition otherwise ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -371,14 +418,15 @@ $('cards').addEventListener('click',e=>{const b=e.target.closest('.offer.live');
 
 function ctl(){const ph=st.phase,k=ph+st.round+st.asking+host+(st.p?st.p.secs:'');if(k==ctlKey)return;ctlKey=k;sent=false;
   const inp=['PITCH','ANSWER','NEGOTIATION'].includes(ph),who=st.asking?NM[st.asking]:'';let h='';
-  if(!host){h={SETUP:'<p class="lead">The panel is reacting to the ask.</p>',READY:'<p class="lead">The founder is about to start.</p>',PITCH:'<p class="lead">The founder is pitching.</p>',GRILLING:`<p class="lead">${esc(who)} is asking a question.</p>`,ANSWER:`<p class="lead">The founder is answering ${esc(who)}.</p>`,DECISIONS:'<p class="lead">The panel is deciding.</p>',NEGOTIATION:'<p class="lead">The founder is weighing the offers.</p>',FINAL:'<p class="lead">Final offers are on the table.</p>'}[ph]||'';h+='<p class="dim">Use your phone to react and vote, or just watch.</p>'}
-  else if(ph=='SETUP')h='<p class="lead">The panel is reacting to your ask.</p><p class="dim">Listen. Your pitch starts right after.</p>';
-  else if(ph=='READY')h=`<p class="lead">They have reacted. Start when you are ready.</p><div class="row"><button class="btn big gold" id="gobtn" type="button">Start my ${st.p?st.p.secs:90} second pitch</button></div><p class="dim">Tip: lead with who it is for, why they pay, and the numbers.</p>`;
-  else if(inp){const L={PITCH:'Pitch your startup. Cover who it is for, why they pay, and your numbers.',ANSWER:`Answer ${esc(who)}. Be specific.`,NEGOTIATION:'Make one counter-offer out loud, or choose an offer on the cards.'}[ph];
-    h=`<p class="lead">${L}</p><div class="microw"><canvas class="voice-orb you" id="orbp" aria-hidden="true"></canvas><div><button class="btn big" id="micbtn" type="button" aria-pressed="false">Start talking</button><p class="dim" id="micmsg" role="status">Press Space or the button. Your words appear below.</p></div></div>
-    <div class="field" style="margin:0"><label for="box" class="sr">Your answer</label><textarea id="box" rows="3" placeholder="Your words appear here as you speak. You can also type."></textarea></div>
-    <div class="row"><button class="btn" id="sendbtn" type="button">${ph=='PITCH'?'Finish pitch':'Send answer'}</button>${ph=='NEGOTIATION'?'<button class="btn ghost" id="walkbtn" type="button">Walk away</button>':''}<span class="dim">Ctrl+Enter also sends</span></div>`}
-  else if(ph=='FINAL')h='<p class="lead">Final offers are on the table.</p><p class="dim">Choose one on the cards, or walk away.</p><div class="row"><button class="btn ghost" id="walkbtn" type="button">Walk away</button></div>';
+  if(!host){h={SETUP:'The panel is reacting to the ask.',READY:'The founder is about to start.',PITCH:'The founder is pitching.',GRILLING:`${esc(who)} is asking a question.`,ANSWER:`The founder is answering ${esc(who)}.`,DECISIONS:'The panel is deciding.',NEGOTIATION:'The founder is weighing the offers.',FINAL:'Final offers are on the table.'}[ph]||'';h=`<p class="lead">${h}</p><p class="dim">Open the Room panel for the code, or use your phone to react and vote.</p>`}
+  else if(ph=='SETUP')h='<p class="lead">The panel is reacting to your ask.</p><p class="dim">Listen. You will start your pitch next.</p>';
+  else if(ph=='READY')h=`<div class="row" style="justify-content:space-between"><div><p class="lead">They have reacted. Start when you are ready.</p><p class="dim">You have ${st.p?st.p.secs:90} seconds. Press Space or the mic button to talk.</p></div><button class="btn xl gold" id="gobtn" type="button">Start my pitch</button></div>`;
+  else if(inp){const L={PITCH:'Pitch your startup',ANSWER:`Answer ${esc(who)}`,NEGOTIATION:'Make one counter-offer, or choose an offer above'}[ph];
+    h=`<p class="lead">${L}</p><div class="ctlrow"><div class="micbox"><canvas class="voice-orb you" id="orbp" aria-hidden="true"></canvas><button class="btn xl" id="micbtn" type="button" aria-pressed="false">Start talking</button></div>
+    <div class="field" style="margin:0"><label for="box" class="sr">Your answer</label><textarea id="box" placeholder="Your words appear here as you speak. You can also type."></textarea></div>
+    <div class="sendcol"><button class="btn xl gold" id="sendbtn" type="button">${ph=='PITCH'?'Finish pitch':'Send answer'}</button>${ph=='NEGOTIATION'?'<button class="btn ghost" id="walkbtn" type="button">Walk away</button>':''}</div></div>
+    <div class="hintrow"><span id="micmsg" role="status">Press Space or the button to talk. Your words appear in the box.</span><span>Ctrl+Enter sends</span></div>`}
+  else if(ph=='FINAL')h='<div class="row" style="justify-content:space-between"><div><p class="lead">Final offers are on the table.</p><p class="dim">Choose one above, or walk away.</p></div><button class="btn ghost xl" id="walkbtn" type="button">Walk away</button></div>';
   else if(ph=='GRILLING')h=`<p class="lead">${esc(who)} is asking…</p><p class="dim">Listen, then answer in your own words.</p>`;
   else if(ph=='DECISIONS')h='<p class="lead">The panel is deciding.</p><p class="dim">Offers appear on the cards.</p>';
   $('ctl').innerHTML=h;
@@ -395,10 +443,13 @@ function renderTx(){const tx=st.tx||[],box=$('tx');
 
 function render(){
   const ph=st.phase,r=stepOf(st);document.body.dataset.phase=ph;
-  const setup=ph=='WAITING',res=ph=='RESULT';
+  const setup=ph=='WAITING',res=ph=='RESULT',strip=host&&['SETUP','READY','PITCH','GRILLING','ANSWER'].includes(ph);
   $('v-setup').hidden=!setup;$('v-live').hidden=setup||res;$('v-report').hidden=!res;
+  $('v-live').dataset.mode=strip?'strip':'full';$('cards').classList.toggle('strip',strip);$('nowp').hidden=!strip;
+  $('nowtips').hidden=ph!='PITCH';$('nowspeech').hidden=ph=='PITCH';
+  if(strip&&ph!='PITCH'&&!live[nowWho]){const w=st.asking||nowWho;if(w&&w!==nowWho||(w&&$('nowwho').textContent==''))setNow(w,(st.inv[w]||{}).last||'…',!(st.inv[w]||{}).last)}
   $('pf').hidden=!host;$('waiting').hidden=host;
-  $('steps').innerHTML=STEPS.map((n,k)=>`<li${k==r?' aria-current="step"':''}${k<r?' class="done"':''}>${n}</li>`).join('');
+  $('steps').innerHTML=STEPS.map((n,k)=>`<li${k==r?` aria-current="step" data-n="${k+1}"`:''}${k<r?' class="done"':''}>${n}</li>`).join('');
   $('jn').textContent=st.joined?`${st.joined} on phones${st.watching?` · ${st.watching} watching`:''}`:'Scan to react and vote';
   IDS.forEach(i=>{const c=$('c-'+i),v=st.inv[i];if(!v)return;
     c.querySelector('.fill').style.width=v.interest+'%';c.querySelector('.val').textContent=v.interest;c.querySelector('.track').setAttribute('aria-valuenow',v.interest);
